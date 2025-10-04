@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
-import os, sys, json, time, requests
+from typing import Optional, Dict, List, Tuple
+import os
+import sys
+import json
+import time
+import requests
 
 try:
     from dotenv import load_dotenv
@@ -13,6 +20,10 @@ except Exception:
 
 BASE = "https://appeears.earthdatacloud.nasa.gov/api"
 
+
+# ------------------------------
+# Data classes & small utilities
+# ------------------------------
 @dataclass
 class TaskSpec:
     name: str
@@ -25,10 +36,13 @@ class TaskSpec:
     projection: str = "geographic"
     dest: Path = Path("downloads")
 
+
 def fmt_hms(sec: float) -> str:
     s = int(max(0, sec))
-    h, s = divmod(s, 3600); m, s = divmod(s, 60)
+    h, s = divmod(s, 3600)
+    m, s = divmod(s, 60)
     return f"{h:02d}:{m:02d}:{s:02d}"
+
 
 def head_size(url: str, headers=None) -> Optional[int]:
     try:
@@ -40,6 +54,7 @@ def head_size(url: str, headers=None) -> Optional[int]:
     except requests.RequestException:
         return None
 
+
 def login(user: str, pwd: str) -> str:
     r = requests.post(f"{BASE}/login", auth=(user, pwd))
     if r.status_code == 401:
@@ -49,6 +64,7 @@ def login(user: str, pwd: str) -> str:
     if not tok:
         raise RuntimeError(f"Login OK mais token manquant. Réponse: {r.text[:400]}")
     return tok
+
 
 def build_task(spec: TaskSpec) -> dict:
     return {
@@ -61,6 +77,7 @@ def build_task(spec: TaskSpec) -> dict:
             "output": {"format": {"type": spec.fmt}, "projection": spec.projection},
         },
     }
+
 
 def submit_task(token: str, task: dict) -> str:
     r = requests.post(f"{BASE}/task", json=task, headers={"Authorization": f"Bearer {token}"})
@@ -75,6 +92,7 @@ def submit_task(token: str, task: dict) -> str:
     if not tid:
         raise RuntimeError("Réponse 202 mais aucun task_id (JSON/Location manquant).")
     return tid
+
 
 def poll_task(token: str, task_id: str, interval: int = 10):
     H = {"Authorization": f"Bearer {token}"}
@@ -95,14 +113,16 @@ def poll_task(token: str, task_id: str, interval: int = 10):
             return
         time.sleep(interval)
 
+
 def list_bundle(token: str, task_id: str):
     r = requests.get(f"{BASE}/bundle/{task_id}", headers={"Authorization": f"Bearer {token}"})
     r.raise_for_status()
     return r.json().get("files", [])
 
-def bundle_overview(BASE: str, token: str, task_id: str) -> tuple[list, int]:
+
+def bundle_overview(base_url: str, token: str, task_id: str) -> tuple[list, int]:
     H = {"Authorization": f"Bearer {token}"}
-    r = requests.get(f"{BASE}/bundle/{task_id}", headers=H)
+    r = requests.get(f"{base_url}/bundle/{task_id}", headers=H)
     r.raise_for_status()
     files = r.json().get("files", [])
     if not files:
@@ -110,7 +130,7 @@ def bundle_overview(BASE: str, token: str, task_id: str) -> tuple[list, int]:
         return [], 0
     total_bytes, sized = 0, 0
     for f in files:
-        url = f"{BASE}/bundle/{task_id}/{f['file_id']}"
+        url = f"{base_url}/bundle/{task_id}/{f['file_id']}"
         size = head_size(url, headers=H)
         if size:
             total_bytes += size
@@ -121,6 +141,7 @@ def bundle_overview(BASE: str, token: str, task_id: str) -> tuple[list, int]:
     else:
         print("📏 Taille totale inconnue (pas de Content-Length).")
     return files, total_bytes
+
 
 def download_file(token: str, task_id: str, file_id: str,
                   out_name: Optional[str] = None, dest: Path = Path("downloads")) -> Path:
@@ -136,7 +157,8 @@ def download_file(token: str, task_id: str, file_id: str,
                     f.write(chunk)
     return out_path
 
-def run_task(token: str, spec: TaskSpec, poll_interval: int = 10) -> list[Path]:
+
+def run_task(token: str, spec: TaskSpec, poll_interval: int = 10) -> List[Path]:
     task = build_task(spec)
     tid = submit_task(token, task)
     print(f"🆔 {spec.name}: {tid}")
@@ -144,16 +166,17 @@ def run_task(token: str, spec: TaskSpec, poll_interval: int = 10) -> list[Path]:
     print("✅ Task finished.")
     files, _ = bundle_overview(BASE, token, tid)
     print(f"📦 {spec.name}: {len(files)} fichier(s) dans le bundle.")
-    saved: list[Path] = []
+    saved: List[Path] = []
     for f in files:
         out = download_file(token, tid, f["file_id"], out_name=f.get("file_name"), dest=spec.dest)
         print("💾 Saved:", out)
         saved.append(out)
     return saved
 
-def run_many(user: str, pwd: str, specs: list[TaskSpec], poll_interval: int = 10) -> dict[str, list[Path]]:
+
+def run_many(user: str, pwd: str, specs: List[TaskSpec], poll_interval: int = 10) -> Dict[str, List[Path]]:
     token = login(user, pwd)
-    results: dict[str, list[Path]] = {}
+    results: Dict[str, List[Path]] = {}
     for spec in specs:
         try:
             print(f"\n=== RUN: {spec.name} [{spec.product}/{spec.layer} {spec.start}→{spec.end}] ===")
@@ -163,71 +186,89 @@ def run_many(user: str, pwd: str, specs: list[TaskSpec], poll_interval: int = 10
             print(f"❌ {spec.name} échouée: {e}")
     return results
 
+
+# ------------------------------
+# Zones & specs (bboxes 210×210)
+# ------------------------------
+def bbox_fc(w: float, s: float, e: float, n: float, name: str) -> dict:
+    """Rectangle GeoJSON (FeatureCollection) pour AppEEARS."""
+    return {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "properties": {"name": name},
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[w, s], [w, n], [e, n], [e, s], [w, s]]]
+            }
+        }]
+    }
+
+
+# BBOX (west, south, east, north) — 210 km × 210 km
+ZONES: Dict[str, Tuple[float, float, float, float]] = {
+    "tropicale_congo":    (19.056773, -0.943227, 20.943227,  0.943227),
+    "aride_sahara":       (23.975316, 22.056773, 26.024684, 23.943227),
+    "temperee_allemagne": (8.576519,  47.556773, 11.423481, 49.443227),
+    "froide_siberie":     (87.990876, 61.056773, 92.009124, 62.943227),
+}
+
+# Fenêtre temporelle commune
+START, END = "01-01-2024", "12-31-2024"
+
+# Jeux de produits/layers + sous-dossier relatif dans la zone
+# NB: Layer SMAP corrigé d'après ton dernier message.
+JOBS: List[Tuple[str, str, str, str]] = [
+    ("Humidité du sol", "SPL3SMP_E.006", "Soil_Moisture_Retrieval_Data_AM_soil_moisture", "SM"),
+    ("T° (LST)",        "MOD11A2.061",   "LST_Day_1km",                                     "LST"),
+    ("NDVI",            "VNP13A1",       "NDVI",                                            "NDVI"),
+    ("Fond Red",        "MCD43A4",       "BRDF_Albedo_Band_Mandatory_Quality_Band1",       "RGB/Red"),
+    ("Fond Green",      "MCD43A4",       "BRDF_Albedo_Band_Mandatory_Quality_Band3",       "RGB/Green"),
+    ("Fond Blue",       "MCD43A4",       "BRDF_Albedo_Band_Mandatory_Quality_Band4",       "RGB/Blue"),
+]
+
+
+def build_zone_specs(base_out: Path = Path("downloads")) -> List[TaskSpec]:
+    """Crée les TaskSpecs pour chaque zone, chacune stockée sous downloads/<zone>/<sous-dossier>."""
+    specs: List[TaskSpec] = []
+    for zone_key, (w, s, e, n) in ZONES.items():
+        geo = bbox_fc(w, s, e, n, name=zone_key)
+        zone_root = base_out / zone_key
+        for job_name, product, layer, subdir in JOBS:
+            specs.append(
+                TaskSpec(
+                    name=f"{job_name} [{zone_key}]",
+                    product=product,
+                    layer=layer,
+                    start=START,
+                    end=END,
+                    ile=geo,
+                    dest=zone_root / subdir
+                )
+            )
+    return specs
+
+
+# -----------
+# Entrypoint
+# -----------
 def main():
     user = os.getenv("EARTHDATA_USER")
-    pwd  = os.getenv("EARTHDATA_PASS")
+    pwd = os.getenv("EARTHDATA_PASS")
+    if not user or not pwd:
+        sys.exit("⚠️  EARTHDATA_USER / EARTHDATA_PASS non trouvés dans l'environnement.")
 
-    ile_path = Path("Backend/get_map/iles.geojson")
-    if not ile_path.exists():
-        sys.exit("iles.geojson introuvable (place ton ILE à côté du script).")
-    try:
-        ile = json.loads(ile_path.read_text(encoding="utf-8"))
-        assert ile.get("type") == "FeatureCollection"
-    except Exception as e:
-        sys.exit(f"ILE invalide: {e}")
+    # Génère les specs pour chaque zone (un dossier par zone, sous-dossiers par produit)
+    specs = build_zone_specs(base_out=Path("downloads"))
 
-    specs: list[TaskSpec] = [
-        TaskSpec(
-            name="Humidité du sol",
-            product="SPL3MSP_E.004", layer="LST_Day_1km",
-            start="01-01-2024", end="12-31-2024",
-            ile=ile, dest=Path("downloads/LST")
-        ),
-        TaskSpec(
-            name="T° (LST)",
-            product="MOD11A2.061", layer="LST_Day_1km",
-            start="01-01-2024", end="12-31-2024",
-            ile=ile, dest=Path("downloads/LST")
-        ),
-        TaskSpec(
-            name="NDVI",
-            product="VNP13A1", layer="NDVI",
-            start="01-01-2024", end="01-01-2024",
-            ile=ile, dest=Path("downloads/NDVI")
-        ),
-        TaskSpec(
-            name="MCD43A4 Red",
-            product="MCD43A4",
-            layer="Nadir_Reflectance_Band1",
-            start="09-24-2025",
-            end="09-24-2025",
-            ile=ile,
-            dest=Path("downloads/RGB")
-        ),
-        TaskSpec(
-            name="MCD43A4 Green",
-            product="MCD43A4",
-            layer="Nadir_Reflectance_Band2",
-            start="09-24-2025",
-            end="09-24-2025",
-            ile=ile,
-            dest=Path("downloads/RGB")
-        ),
-        TaskSpec(
-            name="MCD43A4 Blue",
-            product="MCD43A4",
-            layer="Nadir_Reflectance_Band3",
-            start="09-24-2025",
-            end="09-24-2025",
-            ile=ile,
-            dest=Path("downloads/RGB")
-        ),
-    ]
-
+    # Lance
     results = run_many(user, pwd, specs, poll_interval=10)
+
+    # Résumé
     print("\nRésumé:")
     for name, paths in results.items():
         print(f" - {name}: {len(paths)} fichiers")
+
 
 if __name__ == "__main__":
     main()
