@@ -16,3 +16,4 @@ def get_event(temp: float, soil_moisture: float):
         
         if temp < temp_threshold or soil_moisture < soil_threshold:
             return event_name
+    return None
