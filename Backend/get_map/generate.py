@@ -1,50 +1,103 @@
-import geopandas as gpd
-from shapely.geometry import Polygon
-from shapely.ops import unary_union
-from shapely import affinity
+import numpy as np
 import random
 import math
+from shapely.geometry import Polygon, mapping
+from shapely.ops import unary_union
+import json
 
 # --- Paramètres ---
-GRID_SIZE = 100           # Taille de la grille
-NB_TERRES_PAR_ILE = 400   # Taille moyenne de l'île (en cellules)
-KM_PAR_CELL = 10          # 1 cellule = 10 km
-MAX_ISLAND_SIZE_KM = 200  # Taille cible max
-REDUCTION_FACTOR = 2.0    # Plus grand = île plus petite
+GRID_SIZE = 100          # Taille de la grille (100x100)
+NB_TERRES_PAR_ILE = 400  # Taille moyenne d'une île (en cellules)
+MAX_ISLAND_SIZE_KM = 200 # Taille max cible en km
+KM_PAR_CELL = 10         # 1 cellule = 10 km
+REDUCTION_FACTOR = 5.0   # Réduction supplémentaire (plus grand = plus petit)
 
-# --- Génération d'un centre d'île aléatoire ---
-cx = random.randint(10, GRID_SIZE - 11)
-cy = random.randint(10, GRID_SIZE - 11)
+# --- Initialisation de la carte ---
+carte = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
 
-# Rayon approximatif en cellules
-rayon = int(math.sqrt(NB_TERRES_PAR_ILE / math.pi))
+# --- Fonction pour générer une seule île ---
+def generer_ile(nb_terres=400, num_ile=1):
+    while True:
+        cx = random.randint(10, GRID_SIZE - 11)
+        cy = random.randint(10, GRID_SIZE - 11)
+        if np.all(carte[max(0, cx-5):cx+6, max(0, cy-5):cy+6] == 0):
+            break
 
-# --- Création des cellules de l'île ---
+    rayon = int(math.sqrt(nb_terres / math.pi))
+    
+    x_grid, y_grid = np.ogrid[-rayon:rayon+1, -rayon:rayon+1]
+    mask = x_grid**2 + y_grid**2 <= rayon**2
+
+    x_start = max(0, cx - rayon)
+    y_start = max(0, cy - rayon)
+    x_end = min(GRID_SIZE, cx + rayon + 1)
+    y_end = min(GRID_SIZE, cy + rayon + 1)
+
+    carte_slice = carte[x_start:x_end, y_start:y_end]
+    mask_slice = mask[:x_end-x_start, :y_end-y_start]
+
+    carte_slice[mask_slice] = num_ile
+
+# --- Générer une seule île ---
+generer_ile(nb_terres=NB_TERRES_PAR_ILE, num_ile=1)
+
+# --- Conversion des coordonnées ---
+def convert_coords(geom):
+    if geom['type'] == 'Polygon':
+        geom['coordinates'] = [
+            [(float(x), float(y)) for x, y in ring]
+            for ring in geom['coordinates']
+        ]
+    return geom
+
+# --- Mesure de la taille ---
+def get_bbox_size(geom):
+    xs, ys = zip(*geom['coordinates'][0])
+    return max(xs) - min(xs), max(ys) - min(ys)
+
+# --- Mise à l’échelle ---
+def scale_geometry(geom, factor):
+    geom['coordinates'] = [
+        [(x / factor, y / factor) for x, y in ring]
+        for ring in geom['coordinates']
+    ]
+    return geom
+
+# --- Construction du polygone fusionné ---
 cellules = []
-for dx in range(-rayon, rayon + 1):
-    for dy in range(-rayon, rayon + 1):
-        if dx**2 + dy**2 <= rayon**2:
-            x, y = cx + dx, cy + dy
-            if 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE:
-                cellules.append(Polygon([(x, y), (x+1, y), (x+1, y+1), (x, y+1)]))
+for x in range(GRID_SIZE):
+    for y in range(GRID_SIZE):
+        if carte[x, y] == 1:
+            cellules.append(Polygon([(x, y), (x+1, y), (x+1, y+1), (x, y+1)]))
 
-# --- Fusion en un seul polygone ---
 polygone_fusionne = unary_union(cellules)
+geom_json = convert_coords(mapping(polygone_fusionne))
 
-# --- Mise à l'échelle automatique ---
-minx, miny, maxx, maxy = polygone_fusionne.bounds
-current_size_km = max(maxx - minx, maxy - miny) * KM_PAR_CELL
-scale_factor = (current_size_km / MAX_ISLAND_SIZE_KM) * REDUCTION_FACTOR
+# --- Calcul du facteur d’échelle ---
+w, h = get_bbox_size(geom_json)
+max_size = max(w, h)
+current_size_km = max_size * KM_PAR_CELL
+SCALE_FACTOR = (current_size_km / MAX_ISLAND_SIZE_KM) * REDUCTION_FACTOR
 
-# Réduction des coordonnées
-scaled_polygon = affinity.scale(polygone_fusionne, xfact=1/scale_factor, yfact=1/scale_factor, origin=(0, 0))
+# --- Réduction ---
+geom_json = scale_geometry(geom_json, SCALE_FACTOR)
 
-# --- Création d'un GeoDataFrame ---
-gdf = gpd.GeoDataFrame([{"ile": 1, "geometry": scaled_polygon}], crs="EPSG:3857")
+# --- Création du GeoJSON ---
+geojson = {
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {"ile": 1},
+            "geometry": geom_json
+        }
+    ]
+}
 
-# --- Sauvegarde GeoJSON ---
-output_path = "Backend/get_map/ile.geojson"
-gdf.to_file(output_path, driver="GeoJSON")
+# --- Sauvegarde ---
+with open("Backend/get_map/iles.geojson", "w") as f:
+    json.dump(geojson, f, indent=2)
 
-print(f"✅ Fichier GeoJSON généré : {output_path}")
-print(f"   Facteur total appliqué : {scale_factor:.2f}")
+print("✅ Fichier 'iles.geojson' généré avec 1 seule île.")
+print(f"   Taille max estimée : {MAX_ISLAND_SIZE_KM} km")
+print(f"   Facteur total appliqué : {SCALE_FACTOR:.2f}")
