@@ -49,7 +49,5 @@ def get_geojson(lon_c : float, lat_c : float):
         }]
     }
 
-    out_path = Path("/mnt/data/farmit_congo_bean_polygon.geojson")
-    out_path.write_text(json.dumps(geojson, ensure_ascii=False, indent=2))
+    return geojson
 
-    str(out_path)

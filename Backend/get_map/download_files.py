@@ -5,11 +5,10 @@ from pathlib import Path
 from typing import Optional
 import os, sys, json, time, requests
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
+from generate_geojson import get_geojson
+
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE = "https://appeears.earthdatacloud.nasa.gov/api"
 
@@ -162,19 +161,13 @@ def run_many(user: str, pwd: str, specs: list[TaskSpec], poll_interval: int = 10
         except Exception as e:
             print(f"❌ {spec.name} échouée: {e}")
     return results
-
 def main():
     user = os.getenv("EARTHDATA_USER")
     pwd  = os.getenv("EARTHDATA_PASS")
 
-    ile_path = Path("Backend/get_map/farmit_congo_bean_polygon.geojson")
-    if not ile_path.exists():
-        sys.exit("iles.geojson introuvable (place ton ILE à côté du script).")
-    try:
-        ile = json.loads(ile_path.read_text(encoding="utf-8"))
-        assert ile.get("type") == "FeatureCollection"
-    except Exception as e:
-        sys.exit(f"ILE invalide: {e}")
+    # Centre approximatif pour le polygon Congo River (lat, lon)
+    lon_c, lat_c = 15.5, -1.2
+    ile = get_geojson(lon_c, lat_c)
 
     specs: list[TaskSpec] = [
         TaskSpec(
@@ -189,18 +182,6 @@ def main():
             start="01-01-2024", end="12-31-2024",
             ile=ile, dest=Path("downloads/LST")
         ),
-        # TaskSpec(
-        #     name="T° (LST)",
-        #     product="MOD11A2.061", layer="LST_Day_1km",
-        #     start="01-01-2024", end="01-02-2024",
-        #     ile=ile, dest=Path("downloads/LST")
-        # # ),
-        # TaskSpec(
-        #     name="NDVI",
-        #     product="VNP13A1", layer="NDVI",
-        #     start="01-01-2024", end="12-31-2024",
-        #     ile=ile, dest=Path("downloads/NDVI")
-        # ),
         TaskSpec(
             name="Fond de carte Red",
             product="MCD43A4.061",
