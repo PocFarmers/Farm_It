@@ -68,5 +68,5 @@ geojson = {
 }
 
 # Sauvegarde
-with open("iles.geojson", "w") as f:
+with open("Backend/get_map/iles.geojson", "w") as f:
     json.dump(geojson, f)
