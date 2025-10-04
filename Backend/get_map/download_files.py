@@ -192,8 +192,35 @@ def main():
         TaskSpec(
             name="NDVI",
             product="VNP13A1", layer="NDVI",
-            start="01-01-2024", end="12-31-2024",
+            start="01-01-2024", end="01-01-2024",
             ile=ile, dest=Path("downloads/NDVI")
+        ),
+        TaskSpec(
+            name="MCD43A4 Red",
+            product="MCD43A4",
+            layer="Nadir_Reflectance_Band1",
+            start="09-24-2025",
+            end="09-24-2025",
+            ile=ile,
+            dest=Path("downloads/RGB")
+        ),
+        TaskSpec(
+            name="MCD43A4 Green",
+            product="MCD43A4",
+            layer="Nadir_Reflectance_Band2",
+            start="09-24-2025",
+            end="09-24-2025",
+            ile=ile,
+            dest=Path("downloads/RGB")
+        ),
+        TaskSpec(
+            name="MCD43A4 Blue",
+            product="MCD43A4",
+            layer="Nadir_Reflectance_Band3",
+            start="09-24-2025",
+            end="09-24-2025",
+            ile=ile,
+            dest=Path("downloads/RGB")
         ),
     ]
 
