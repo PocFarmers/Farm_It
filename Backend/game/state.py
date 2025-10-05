@@ -177,6 +177,8 @@ def load_next_step_data(step: int, db: Session) -> dict:
     Returns:
         dict with update statistics
     """
+    from in_game.get_event import get_event
+
     try:
         # Get historical data (using a default location for now)
         history_data = get_history_info(0.943227, 20.000000)
@@ -192,25 +194,39 @@ def load_next_step_data(step: int, db: Session) -> dict:
             humidity = history_data["soil_moisture_0_to_7cm_mean"].iloc[-1]
             temperature = history_data["soil_temperature_28_to_100cm_mean"].iloc[-1]
 
-        # Update all tiles with new weather data
+        # Update all tiles with new weather data and detect events
         tiles = db.query(Tile).all()
         updated_count = 0
+        event_count = {"Drought": 0, "Fire": 0, "None": 0}
 
         for tile in tiles:
             tile.humidity = float(humidity)
             tile.temperature = float(temperature)
+
+            # Detect event based on temperature and soil moisture
+            event = get_event(float(temperature), float(humidity))
+            tile.event = event
+
+            # Track event statistics
+            if event:
+                event_count[event] = event_count.get(event, 0) + 1
+            else:
+                event_count["None"] += 1
+
             updated_count += 1
 
         db.commit()
 
         print(f"🌦️ [load_next_step_data] Step {step} -> Day {day_index}: temp={temperature:.1f}°C, humidity={humidity:.3f}")
+        print(f"🔥 [load_next_step_data] Events detected: {event_count}")
 
         return {
             "step": step,
             "day_index": day_index,
             "tiles_updated": updated_count,
             "humidity": float(humidity),
-            "temperature": float(temperature)
+            "temperature": float(temperature),
+            "events": event_count
         }
 
     except Exception as e:

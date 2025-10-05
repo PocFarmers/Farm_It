@@ -76,6 +76,12 @@ export const RESOURCE_ICONS = {
     score: ''
 };
 
+// Event icons - For disasters affecting tiles
+export const EVENT_ICONS = {
+    Drought: '☀️',
+    Fire: '🔥'
+};
+
 // Game constants
 export const GAME_CONSTANTS = {
     MAX_STEPS: 50,  // From INITAL.md

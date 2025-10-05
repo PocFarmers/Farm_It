@@ -1,5 +1,5 @@
 import { getTileColor, getTileIcon } from '../utils/tileHelpers';
-import { ZONE_NAMES, TILE_TYPE_NAMES, CROP_STATE_NAMES } from '../constants/gameConfig';
+import { ZONE_NAMES, TILE_TYPE_NAMES, CROP_STATE_NAMES, EVENT_ICONS } from '../constants/gameConfig';
 
 export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
   const [mask, matrixMoisture, matrixTemperature] = values;
@@ -79,6 +79,11 @@ export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
       content += `<div class="text-orange-400">🔥 Firebreak</div>`;
     }
 
+    if (tile.event) {
+      const eventIcon = EVENT_ICONS[tile.event] || '⚠️';
+      content += `<div class="text-red-400 font-bold">${eventIcon} ${tile.event}</div>`;
+    }
+
     content += `
           <div class="mt-2 pt-2 border-t border-gray-600">
             <div><span class="text-gray-400">🌡️ Temp:</span> ${temperature.toFixed(1)}°C</div>
@@ -99,9 +104,12 @@ export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
     }
   };
 
+  // Get event icon if tile has an event
+  const eventIcon = tile?.event ? (EVENT_ICONS[tile.event] || null) : null;
+
   return (
     <div
-      className={`${cellStyle} transition-all duration-150 cursor-pointer border border-black/10 flex items-center justify-center text-xs font-bold select-none`}
+      className={`${cellStyle} transition-all duration-150 cursor-pointer border border-black/10 flex items-center justify-center text-xs font-bold select-none relative`}
       style={{
         width: `${cellSize}px`,
         height: `${cellSize}px`,
@@ -111,7 +119,15 @@ export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
       onClick={handleClick}
       title=""
     >
+      {/* Main tile icon (crops, etc.) */}
       {icon && <span className="drop-shadow-md">{icon}</span>}
+
+      {/* Event icon overlay - positioned in top-right corner */}
+      {eventIcon && (
+        <span className="absolute top-0 right-0 text-lg drop-shadow-lg animate-pulse">
+          {eventIcon}
+        </span>
+      )}
     </div>
   );
 }

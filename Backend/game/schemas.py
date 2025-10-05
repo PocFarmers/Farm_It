@@ -18,6 +18,7 @@ class TileResponse(BaseModel):
     last_irrigated_step: int
     irrigated_this_step: bool
     exploited: Literal["conserve", "exploit"]
+    event: Optional[Literal["Drought", "Fire"]] = None
 
     class Config:
         from_attributes = True

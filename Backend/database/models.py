@@ -50,6 +50,7 @@ class Tile(Base):
     last_irrigated_step = Column(Integer, default=-1)
     irrigated_this_step = Column(Boolean, default=False)
     exploited = Column(String, default="conserve")
+    event = Column(String, nullable=True)  # Current event affecting this tile (Drought, Fire, or None)
 
     def __repr__(self):
         return f"<Tile(id={self.id}, pos=({self.grid_i},{self.grid_j}), type={self.type}, owner={self.owner})>"
