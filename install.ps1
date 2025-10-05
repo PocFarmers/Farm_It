@@ -51,4 +51,4 @@ npm install
 Pop-Location
 
 Write-Host "✅ Installation terminée."
-Write-Host "➡️ Pour démarrer: .\start_all.ps1"
+Write-Host "➡️ Pour démarrer: .\run.ps1"

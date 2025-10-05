@@ -52,4 +52,4 @@ npm install
 popd >/dev/null
 
 echo "✅ Installation terminée."
-echo "➡️ Pour démarrer: ./start_all.sh"
+echo "➡️ Pour démarrer: ./run.sh"
