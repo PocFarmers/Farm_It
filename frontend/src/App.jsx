@@ -62,6 +62,9 @@ function App() {
 
                 {/* Game Initialization Screen */}
                 <GameInitScreen />
+
+                {/* Chatbot */}
+                <Chatbot apiUrl="http://localhost:8000/chat" />
             </div>
         </GameProvider>
     );
