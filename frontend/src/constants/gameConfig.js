@@ -56,23 +56,23 @@ export const TILE_COLORS = {
     forest_owned: 'bg-[#35613F] hover:bg-[#2a4f32] ring-2 ring-[#F5A842]'
 };
 
-// Tile icons/emojis - All removed for clean design
+// Tile icons/emojis - Icons for crops, water reserve, and firebreak
 export const TILE_ICONS = {
     water: '',
     unowned: '',
     owned_empty: '',
-    seed: '',
-    growing: '',
-    harvest: '',
+    seed: '🌱',
+    growing: '🌿',
+    harvest: '🌾',
     forest: '',
-    water_reserve: '',
-    firebreak: ''
+    water_reserve: '💧',
+    firebreak: '🔥'
 };
 
-// Resource icons - All removed for clean design
+// Resource icons - Shovel and water drop
 export const RESOURCE_ICONS = {
-    shovel: '',
-    drop: '',
+    shovel: '🥄',
+    drop: '💧',
     score: ''
 };
 

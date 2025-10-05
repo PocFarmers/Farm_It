@@ -19,15 +19,15 @@ export function ResourceDisplay() {
         <div className="flex gap-3 text-sm">
             {/* Shovels */}
             <div className="bg-[#A37039] px-5 py-2 rounded-lg border-2 border-[#35613F] transition-colors">
-                <span className="font-bold text-white text-base">
-                    Shovels: {shovels}
+                <span className="font-bold text-white text-base flex items-center gap-2">
+                    {RESOURCE_ICONS.shovel} {shovels}
                 </span>
             </div>
 
             {/* Drops */}
             <div className="bg-[#35613F] px-5 py-2 rounded-lg border-2 border-[#A37039] transition-colors">
-                <span className="font-bold text-white text-base">
-                    Drops: {drops}
+                <span className="font-bold text-white text-base flex items-center gap-2">
+                    {RESOURCE_ICONS.drop} {drops}
                 </span>
             </div>
 
