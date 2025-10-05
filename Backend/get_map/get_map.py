@@ -1,4 +1,5 @@
 import os
+from Backend.get_map import get_history_info
 import numpy as np
 import math
 import random
@@ -106,13 +107,19 @@ def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", la
 def get_map():
     gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.2,0.4))
 
-    tif_files = {
-        "temperature": os.path.expanduser("~/Farm_It/data/temperature/froide_MOD11A2.061_LST_Day_1km_doy2023361000000_aid0001.tif"),
-        "humidity": os.path.expanduser("~/Farm_It/data/humidite/tropicale_SPL3SMP_E.006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm_doy2024132000000_aid0001.tif")
-    }
+    history_info=get_history_info(0.943227, 20.000000)
+    
+    temp = history_info["soil_moisture_0_to_7cm_mean"]
+    hum = history_info["soil_temperature_28_to_100cm_mean"]
 
-    combined_matrix = add_tif_layers_to_mask(mask, gdf, tif_files)
-    layer_names = ["mask", "temperature", "humidity"]
-    save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", layer_names=layer_names)
+    ny, nx = mask.shape
+    combined_matrix = np.zeros((ny, nx, 3))
+
+    # Couche 0 : présence de l’île
+    combined_matrix[:, :, 0] = mask
+
+    # Couche 1 et 2 : valeurs météo uniquement sur l’île
+    combined_matrix[:, :, 1] = mask * temp
+    combined_matrix[:, :, 2] = mask * hum
 
     return combined_matrix
