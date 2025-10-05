@@ -1,5 +1,5 @@
 import os
-from get_history_info import get_history_info
+from get_map.get_history_info import get_history_info
 import numpy as np
 import math
 import random
@@ -9,7 +9,7 @@ import rasterio
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 
-def generate_bean_gdf_and_mask(grid_size=(200,200), scale_range=(0.2,0.5),
+def generate_bean_gdf_and_mask(grid_size=(50,50), scale_range=(0.2,0.5),
                                R_km=30.0, e=0.35, squash=0.75, x_offset_km=4.5, N=240):
     ny, nx = grid_size
 
@@ -105,7 +105,7 @@ def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", la
     print(f"Matrice sauvegardée dans {filename}")
     
 def get_map():
-    gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.2,0.4))
+    gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.4,0.8))
 
     history_info=get_history_info(0.943227, 20.000000)
     

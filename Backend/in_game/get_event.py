@@ -2,7 +2,7 @@
 import pandas as pd
 
 # Lire le CSV
-df = pd.read_csv("./../../nasa_event_thresholds.csv")
+df = pd.read_csv("nasa_event_thresholds.csv")
 
 # Grouper par Event et créer un dictionnaire {Event: {Indicator: Threshold}}
 events_dict = df.groupby('Event')[['Indicator', 'Threshold']].apply(
