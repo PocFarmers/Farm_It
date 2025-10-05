@@ -1,6 +1,12 @@
 import { useMatrixData } from './hooks/useMatrixData';
 import { MatrixGrid } from './components/MatrixGrid';
 import { LoadingState } from './components/LoadingState';
+import { GameProvider } from './context/GameContext';
+import { ResourceDisplay } from './components/ResourceDisplay';
+import { TileActionModal } from './components/TileActionModal';
+import { NextStepButton } from './components/NextStepButton';
+import { GameOverScreen } from './components/GameOverScreen';
+import { GameInitScreen } from './components/GameInitScreen';
 
 function App() {
   const { data, loading, error } = useMatrixData();
@@ -26,31 +32,38 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-blue-600 overflow-hidden">
-      {/* Header - Game UI Style */}
-      <header className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 shadow-lg border-b-4 border-green-800">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🏝️</span>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Farm It</h1>
-              <p className="text-xs text-green-200">Votre île • {data.shape[0]}x{data.shape[1]} tuiles</p>
+    <GameProvider>
+      <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-blue-600 overflow-hidden">
+        {/* Header - Game UI Style */}
+        <header className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 shadow-lg border-b-4 border-green-800">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🏝️</span>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Farm It</h1>
+                <p className="text-xs text-green-200">Votre île • {data.shape[0]}x{data.shape[1]} tuiles</p>
+              </div>
             </div>
+            <ResourceDisplay />
           </div>
-          <div className="flex gap-4 text-sm">
-            <div className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-              <span className="font-semibold">🌡️ Température</span>
-            </div>
-            <div className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-              <span className="font-semibold">💧 Humidité</span>
-            </div>
-          </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Game View */}
-      <MatrixGrid data={data} layers={data.layers} />
-    </div>
+        {/* Game View */}
+        <MatrixGrid data={data} layers={data.layers} />
+
+        {/* Next Step Button - Bottom Center */}
+        <NextStepButton />
+
+        {/* Tile Action Modal */}
+        <TileActionModal />
+
+        {/* Game Over Screen */}
+        <GameOverScreen />
+
+        {/* Game Initialization Screen */}
+        <GameInitScreen />
+      </div>
+    </GameProvider>
   );
 }
 

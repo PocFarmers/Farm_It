@@ -1,20 +1,68 @@
 import { Tooltip } from 'react-tooltip';
 import { MatrixCell } from './MatrixCell';
-import { useState } from 'react';
+import { GameStatsPanel } from './GameStatsPanel';
+import { useState, useMemo } from 'react';
+import { useGame } from '../context/GameContext';
 
 export function MatrixGrid({ data, layers }) {
+  // Defensive checks
+  if (!data || !data.data || !Array.isArray(data.data)) {
+    console.error('MatrixGrid: Invalid data prop', data);
+    return (
+      <div className="flex items-center justify-center h-screen bg-red-100">
+        <p className="text-red-800 font-bold">Error: Invalid map data</p>
+      </div>
+    );
+  }
+
   const matrix = data.data;
-  const gridSize = matrix.length;
+  const rows = matrix.length;
+  const cols = matrix[0]?.length || 0;
+
+  if (rows === 0 || cols === 0) {
+    console.error('MatrixGrid: Empty matrix', { rows, cols });
+    return (
+      <div className="flex items-center justify-center h-screen bg-yellow-100">
+        <p className="text-yellow-800 font-bold">Error: Empty map matrix</p>
+      </div>
+    );
+  }
+
+  // Get game state and tile selection handler
+  const { gameState, setSelectedTile } = useGame();
 
   // Calculer la taille de cellule pour que toute la grille tienne à l'écran
   const availableHeight = window.innerHeight - 100;
   const availableWidth = (window.innerWidth * 0.75) - 100; // 3/4 de l'écran moins padding
 
-  // Prendre la plus petite dimension pour que ça tienne
-  const cellSize = Math.min(
-    Math.floor(availableHeight / gridSize),
-    Math.floor(availableWidth / gridSize)
-  );
+  // Calculate cell size based on the rectangle dimensions
+  const cellSizeByHeight = Math.floor(availableHeight / rows);
+  const cellSizeByWidth = Math.floor(availableWidth / cols);
+  const cellSize = Math.min(cellSizeByHeight, cellSizeByWidth);
+
+  // Create tile map by grid position (i,j) for quick lookup
+  const tileMap = useMemo(() => {
+    if (!gameState?.tiles) return {};
+
+    const map = {};
+    gameState.tiles.forEach(tile => {
+      // Create key from grid position
+      const key = `${tile.grid_i},${tile.grid_j}`;
+      map[key] = tile;
+    });
+    return map;
+  }, [gameState?.tiles]);
+
+  // Helper to get tile by grid position
+  const getTileByPosition = (row, col) => {
+    const key = `${row},${col}`;
+    return tileMap[key];
+  };
+
+  // Handle tile click
+  const handleTileClick = (tile) => {
+    setSelectedTile(tile);
+  };
 
   // État pour le zoom et le pan
   const [zoom, setZoom] = useState(1);
@@ -57,25 +105,10 @@ export function MatrixGrid({ data, layers }) {
   return (
     <div className="flex h-[calc(100vh-80px)]">
       {/* Panneau latéral gauche - 1/4 largeur */}
-      <div className="w-1/4 bg-gradient-to-br from-green-700 to-green-900 p-6 text-white">
-        <div className="space-y-6">
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-              <span className="text-2xl">🏝️</span>
-              Votre Île
-            </h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-green-200">Taille:</span>
-                <span className="font-bold">{data.shape[0]}x{data.shape[1]}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-green-200">Tuiles:</span>
-                <span className="font-bold">{data.shape[0] * data.shape[1]}</span>
-              </div>
-            </div>
-          </div>
+      <div className="w-1/4 bg-gradient-to-br from-green-700 to-green-900 p-6 text-white overflow-y-auto">
+        <GameStatsPanel />
 
+        <div className="mt-6 space-y-4">
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
             <h3 className="font-bold mb-3 flex items-center gap-2">
               <span>🎮</span>
@@ -91,8 +124,8 @@ export function MatrixGrid({ data, layers }) {
                 <span>Clic + glisser pour déplacer</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-green-200">ℹ️</span>
-                <span>Survoler pour détails</span>
+                <span className="text-green-200">👆</span>
+                <span>Cliquer sur tuile pour agir</span>
               </div>
             </div>
             <button
@@ -129,23 +162,6 @@ export function MatrixGrid({ data, layers }) {
               </div>
             </div>
           </div>
-
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h3 className="font-bold mb-3 flex items-center gap-2">
-              <span>🎨</span>
-              Légende
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-600 rounded border-2 border-white/50"></div>
-                <span>Eau</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-600 rounded border-2 border-white/50"></div>
-                <span>Terre</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -169,21 +185,26 @@ export function MatrixGrid({ data, layers }) {
           <div
             className="grid gap-0 shadow-2xl border-4 border-white/30"
             style={{
-              gridTemplateColumns: `repeat(${matrix[0].length}, ${cellSize}px)`,
-              gridTemplateRows: `repeat(${gridSize}, ${cellSize}px)`,
+              gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+              gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
             }}
           >
             {matrix.map((row, i) =>
-              row.map((cellValues, j) => (
-                <MatrixCell
-                  key={`${i}-${j}`}
-                  row={i}
-                  col={j}
-                  values={cellValues}
-                  layers={layers}
-                  cellSize={cellSize}
-                />
-              ))
+              row.map((cellValues, j) => {
+                const tile = getTileByPosition(i, j);
+                return (
+                  <MatrixCell
+                    key={`${i}-${j}`}
+                    row={i}
+                    col={j}
+                    values={cellValues}
+                    layers={layers}
+                    cellSize={cellSize}
+                    tile={tile}
+                    onTileClick={handleTileClick}
+                  />
+                );
+              })
             )}
           </div>
         </div>

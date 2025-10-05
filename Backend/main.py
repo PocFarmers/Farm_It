@@ -11,8 +11,21 @@ sys.path.append(os.path.dirname(__file__))
 from get_map.get_map import get_map
 from get_map.get_history_info import get_history_info
 from in_game.get_event import get_event
+from database.models import Base
+from database.session import engine
+from routers import game, tile
 
-app = FastAPI(title="Farm It API", version="1.0.0")
+app = FastAPI(
+    title="Farm It API",
+    version="1.0.0",
+    description="Backend API for Farm It - A turn-based farming game with resource management"
+)
+
+# Database initialization on startup
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on application startup"""
+    Base.metadata.create_all(bind=engine)
 
 # Configuration CORS
 app.add_middleware(
@@ -22,6 +35,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(game.router, prefix="/game", tags=["game"])
+app.include_router(tile.router, prefix="/tile", tags=["tile"])
 
 class EventRequest(BaseModel):
     temperature: float

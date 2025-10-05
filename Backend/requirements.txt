@@ -11,3 +11,5 @@ matplotlib==3.8.2
 openmeteo-requests==1.1.0
 requests-cache==1.1.1
 retry-requests==2.0.0
+sqlalchemy==2.0.36
+python-dotenv==1.0.0

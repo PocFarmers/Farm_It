@@ -1,181 +1,128 @@
 FEATURE
-Core Entities
+Connect the functional backend with the frontend to gamify the UI. The backend folder is "Backend" and the frontend folder is "frontend". The frontend is implemented in "frontend".
 
-Tile (parcel)
+DOCUMENTATION
 
-id: grid index
+Game Principle
 
-zoneId: integer (1=cold, 2=arid, 3=tropical, 4=temperate)
+Entities & State
 
-type: "forest" | "field" | "empty"
+Tile
 
-owner: null | "player"
+id (grid index)
 
-tileState: "seed" | "growing" | "harvest" (only for planted fields)
+zoneId (1..4: cold, arid, tropical, temperate)
 
-hasWaterReserve: boolean → irrigates adjacent fields once per step
+type (forest | field | virgin)
 
-hasFirebreak: boolean
+owner (null | player)
 
-temperature: float (from temperature layer)
+tileState (for crops): seed / growing / harvest (for planted fields)
 
-humidity: float (from humidity layer)
+hasWaterReserve (bool) → irrigates adjacent fields once per step if true
 
-lastIrrigatedStep: int
+hasFirebreak (bool)
 
-irrigatedThisStep: bool
+temperature (value from layer)
 
-exploited: "conserve" | "exploit" (for forests — conserved forests provide fertilizer to adjacent fields)
+humidity (value from layer)
 
-Player (single, local)
+lastIrrigatedStep (int)
 
-resources:
+irrigatedThisStep (bool)
 
-shovels (int)
+exploited (for forests: conserve | exploit?) → if conserved, gives fertilizer to adjacent fields
 
-drops (int)
+Player (unique, local)
 
-score (int)
+resources: shovels (int), drops (int), score (int)
 
 tilesOwned: list of tile IDs
 
-Initial inventory: 3 owned empty fields
+initial inventory: 3 empty plots (3 virgin fields at start)
 
-Game Loop
+Resources & Step Generation
 
-Each step (triggered by “Next Step”):
+Each step ("next step" button):
 
 shovels += 1
+
 drops += 1
+
 score += 10
 
+Actions (cost & effect)
 
-Crop cycle: seed → growing → harvest (advances every 4 steps)
+Buy water reserve: cost = 3 shovels → sets hasWaterReserve = true on tile
 
-If not irrigated this step and no adjacent water reserve → crop dies (tile becomes "empty")
+Buy firebreak: cost = 3 shovels → sets hasFirebreak = true
 
-Player Actions
-Action	Cost	Effect
-Buy Water Reserve	3 shovels	hasWaterReserve = true
-Buy Firebreak	3 shovels	hasFirebreak = true
-Buy Tile	2 shovels	owner = player
-Manual Irrigation	1 drop	irrigatedThisStep = true
-Fertilizer	1 shovel	apply fertilizer to target tile
-Map & Spatial Data
+Buy tile: cost = 2 shovels → owner = player
 
-Replace OSM with matrix or GeoJSON layers + .tif
+Irrigate (manual): cost = 1 drop → sets irrigatedThisStep = true on target tile
 
-Base (RGB): 3 static .tif files
+Fertilizer (manual): cost = 1 shovel → applies fertilizer to target tile
 
-Temporal layers: temperature/ and humidity/ folders (fixed per step)
+Interaction Rules / Local Effects
 
-Each tile reads temperature and humidity values from layers
+Conserved forest (owned or not): gives +1 fertilizer per step to each adjacent planted field
 
-Zones: defined in GeoJSON/matrix via zoneId
+Water reserve: automatically irrigates all adjacent planted fields per step
 
-UI
+Manual irrigation: irrigates a target tile for that step
 
-Top-right: display resources (icons for shovels, drops, score)
+Crop lifecycle: seed → growing → harvest
 
-Right-center: show current step, #fields, #forests (conserved/exploited), crop counts by type
+Transition: every 4 steps, crop moves to next state
 
-Tile popup (on click):
+If not irrigated (no irrigatedThisStep and no adjacent water reserve), crop dies → tile becomes virgin
 
-Display temperature, humidity, zone, type, state
-
-Buttons: buy, irrigate, fertilize, buy water reserve, buy firebreak, plant
-
-Backend
-
-Stack: FastAPI + SQLite/Postgres (local)
-
-Auto-save: save full game state each step
-
-Endpoints:
-
-GET /game/load → load local state
-
-POST /game/save → save full state (player + tiles + step)
-
-POST /game/next-step → compute next step (resources, cycles, effects, deaths, increment step)
-
-POST /tile/:id/action → apply action (buy, irrigate, fertilize, etc.)
-
-Single-player only (no multiplayer logic).
-
-Visualization
-
-Tiles colored by state: seed / growing / harvest / empty / owned / unowned
-
-Icons for water reserves and firebreaks
-
-Show temperature and humidity in popup
-
-DOCUMENTATION
 Time & Progression
 
 1 step = 8 simulated days
 
-50 steps = 1 year (game lasts 50 steps)
+50 steps = 1 year (hard mode = 50 steps)
 
-Game advances only when the player clicks “Next Step”
+Game advances only when player clicks "next step"
 
-No failure state → always continues to 50 steps
+No failure: game continues until 50 steps
 
-Objective: have the largest farm at the end (by owned tiles & maintained crops)
+Objective: maximize exploited tiles at end of 50 steps (measure: number of owned tiles / maintained crops)
 
-Local Effects
+Map / Spatial Data
 
-Conserved forests: +1 fertilizer per step to each adjacent planted field
+OSM replaced by matrix / geojson layers + .tif files:
 
-Water reserves: auto-irrigate adjacent planted fields once per step
+Base RGB: 3 static .tif files
 
-Manual irrigation: irrigates target tile for the current step only
+Temporal layers: temperature/ and humidity/ folders with .tif (values per pixel/cell; fixed per step for now)
+
+Each tile reads its temperature/humidity from respective layer
+
+Zones (cold, arid, tropical, temperate) defined in matrix / geojson (zoneId)
+
+Minimal UI Logic
+
+Display resources at top-right: shovels (shovel icon), drops (drop icon), score (laurel icon)
+
+Right-center: current step, number of fields, number of forests, conserved vs exploited forests, number of crops and types (e.g., wheat, potato, banana)
+
+Tile popup (on click): display temperature, humidity, zone, tile type, states, and applicable action buttons (buy, irrigate, fertilizer, buy water reserve, firebreak, plant if possible)
 
 EXAMPLE
-Example Game State (JSON)
-{
-  "step": 1,
-  "player": {
-    "shovels": 3,
-    "drops": 3,
-    "score": 0,
-    "tilesOwned": [12, 45, 78]
-  },
-  "tiles": [
-    {
-      "id": 12,
-      "zoneId": "tropical",
-      "type": "field",
-      "owner": "player",
-      "tileState": "seed",
-      "hasWaterReserve": false,
-      "hasFirebreak": false,
-      "temperature": 30.2,
-      "humidity": 0.72,
-      "lastIrrigatedStep": 0
-    }
-  ]
-}
 
-OTHER CONSIDERATION
+Step click: +1 shovel, +1 drop, +10 score
 
-Define harvest rewards (shovels, score, or other bonuses).
+Player buys water reserve on a virgin field → hasWaterReserve = true
 
-Decide adjacency logic → use 8-neighbor rule (recommended).
+Adjacent fields automatically irrigated during step
 
-When buying an empty parcel → becomes owned but remains "empty" until planted.
+Conserved forest adjacent to a field → +1 fertilizer per step applied automatically
 
-Define timing between harvest and reset to "empty" (currently: manual or automatic after harvest).
+OTHER CONSIDERATIONS
 
-Each step triggers:
+Maintain separation of backend logic and frontend UI
 
-Resource generation
+All game rules must be respected when connecting backend → frontend
 
-Crop state transitions
-
-Forest and water reserve effects
-
-Crop death check
-
-Auto-save
+Ensure tile state, resources, and step progression update correctly in the UI
