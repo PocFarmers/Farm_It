@@ -148,6 +148,7 @@
 
 
 import os
+from get_map.download_files import get_nasa_power_point
 from get_map.get_history_info import get_history_info
 import numpy as np
 import math
@@ -252,15 +253,15 @@ def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", la
                 f.write(line + "\n")
 
     print(f"Matrice sauvegardée dans {filename}")
-    
 
-history_info=get_history_info(0.943227, 20.000000)
-
-TEMP = history_info["soil_moisture_0_to_7cm_mean"]
-HUM = history_info["soil_temperature_28_to_100cm_mean"]
 
 def get_map():
     gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.4,0.8))
+
+    history_info=get_nasa_power_point(0.943227, 20.000000)
+
+    TEMP = history_info["T2M"]
+    HUM = history_info["RH2M"]
 
     temp = TEMP[0]
     hum = HUM[0]

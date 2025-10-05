@@ -6,9 +6,9 @@ from pydantic import BaseModel
 from typing import Optional
 import sys
 import os
+import fitz
 
 # Ajouter le dossier Backend au path pour les imports
-sys.path.append(os.path.dirname(__file__))
 
 from get_map.get_map import get_map
 from in_game.get_event import get_event
@@ -16,7 +16,13 @@ from database.models import Base
 from database.session import engine, get_db
 from routers import game, tile
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 
+# Charge automatiquement le .env
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+print("keyyyyyyyyy " + OPENAI_API_KEY )
 app = FastAPI(
     title="Farm It API",
     version="1.0.0",
@@ -115,9 +121,19 @@ async def api_get_event(request: EventRequest):
 async def health_check():
     return {"status": "healthy"}
 
+
+# --- Fonction pour lire le PDF ---
+def extract_text_from_pdf(file_path: str) -> str:
+    text = ""
+    with fitz.open(file_path) as pdf:
+        for page in pdf:
+            text += page.get_text()
+    return text
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=OPENAI_API_KEY)
     if not client.api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY manquant dans l'environnement.")
 
@@ -126,7 +142,7 @@ def chat(req: ChatRequest):
             system=req.system,
             history=req.history,
             user_message=req.message,
-            context=req.context
+            context= extract_text_from_pdf("FarmIt_Game_Rules.pdf")
         )
 
         resp = client.responses.create(

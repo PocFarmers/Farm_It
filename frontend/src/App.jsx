@@ -7,6 +7,7 @@ import { TileActionModal } from './components/TileActionModal';
 import { NextStepButton } from './components/NextStepButton';
 import { GameOverScreen } from './components/GameOverScreen';
 import { GameInitScreen } from './components/GameInitScreen';
+import Chatbot from './components/Chatbot';
 
 function App() {
     const { data, loading, error, refreshMap } = useMatrixData();
