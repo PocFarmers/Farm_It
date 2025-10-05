@@ -12,6 +12,8 @@ class GameState(Base):
     current_step = Column(Integer, default=0)
     max_steps = Column(Integer, default=10)
     is_game_over = Column(Boolean, default=False)
+    map_rows = Column(Integer, default=50)
+    map_cols = Column(Integer, default=50)
 
     def __repr__(self):
         return f"<GameState(step={self.current_step}, max_steps={self.max_steps}, game_over={self.is_game_over})>"

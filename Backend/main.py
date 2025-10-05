@@ -11,7 +11,6 @@ import os
 sys.path.append(os.path.dirname(__file__))
 
 from get_map.get_map import get_map
-from get_map.get_history_info import get_history_info
 from in_game.get_event import get_event
 from database.models import Base
 from database.session import engine
@@ -62,6 +61,7 @@ async def api_get_map():
         combined_matrix = get_map()
 
         # Convertir le numpy array en liste pour la sérialisation JSON
+        print(f"combined_matrix.shape: {combined_matrix.shape}")
         return {
             "status": "success",
             "shape": combined_matrix.shape,
@@ -69,6 +69,9 @@ async def api_get_map():
             "layers": ["mask", "soil_moisture", "soil_temperature"]
         }
     except Exception as e:
+        import traceback
+        print(f"ERROR in /get_map: {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/get_event")

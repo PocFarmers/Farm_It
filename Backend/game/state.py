@@ -17,21 +17,32 @@ def initialize_game(db: Session) -> None:
     Initialize new game with default state.
     Creates GameState, Player, and Tiles from map generation.
     """
+    print("🎮 [initialize_game] Starting game initialization")
+
     # Clean up old game if exists
     existing_state = db.query(GameState).first()
     if existing_state:
+        print("🎮 [initialize_game] Cleaning up existing game")
         db.query(Tile).delete()
         db.query(Player).delete()
         db.query(GameState).delete()
         db.commit()
 
-    # Create new game state
-    game_state = GameState(current_step=0, max_steps=10, is_game_over=False)
-    player = Player(shovels=3, drops=3, score=0)
-
-    # Generate initial map
+    # Generate initial map ONCE
+    print("🎮 [initialize_game] Calling get_map() to generate new map")
     matrix = get_map()  # Returns (ny, nx, 3) array
     ny, nx = matrix.shape[0], matrix.shape[1]
+    print(f"🎮 [initialize_game] Received map with dimensions {ny}x{nx}")
+
+    # Create new game state with map dimensions
+    game_state = GameState(
+        current_step=0,
+        max_steps=10,
+        is_game_over=False,
+        map_rows=ny,
+        map_cols=nx
+    )
+    player = Player(shovels=3, drops=3, score=0)
 
     # Create tiles from matrix
     tiles = []
@@ -60,6 +71,36 @@ def initialize_game(db: Session) -> None:
     db.add(player)
     db.add_all(tiles)
     db.commit()
+    print(f"🎮 [initialize_game] Game initialized with {len(tiles)} tiles")
+    print(f"🎮 [initialize_game] Map dimensions stored: {ny}x{nx}")
+
+
+def get_map_from_tiles(db: Session) -> np.ndarray:
+    """
+    Reconstruct map matrix from stored tiles.
+    Returns (ny, nx, 3) array where:
+    - Layer 0: mask (0 = water, 1 = land)
+    - Layer 1: soil moisture
+    - Layer 2: temperature
+    """
+    game_state = db.query(GameState).first()
+    if not game_state:
+        raise ValueError("Game not initialized")
+
+    ny, nx = game_state.map_rows, game_state.map_cols
+    matrix = np.zeros((ny, nx, 3))
+
+    # Get all tiles
+    tiles = db.query(Tile).all()
+
+    # Fill matrix from tiles
+    for tile in tiles:
+        i, j = tile.grid_i, tile.grid_j
+        matrix[i, j, 0] = 1  # mask - tile exists
+        matrix[i, j, 1] = tile.humidity
+        matrix[i, j, 2] = tile.temperature
+
+    return matrix
 
 
 def get_current_game_state(db: Session) -> GameStateResponse:
@@ -74,6 +115,10 @@ def get_current_game_state(db: Session) -> GameStateResponse:
     if not game_state or not player:
         raise ValueError("Game not initialized. Call initialize_game() first.")
 
+    print(f"🔍 [get_current_game_state] GameState attributes: {dir(game_state)}")
+    print(f"🔍 [get_current_game_state] Has map_rows: {hasattr(game_state, 'map_rows')}")
+    print(f"🔍 [get_current_game_state] Has map_cols: {hasattr(game_state, 'map_cols')}")
+
     # Calculate tiles_owned
     tiles_owned = [t.id for t in tiles if t.owner == "player"]
 
@@ -87,12 +132,16 @@ def get_current_game_state(db: Session) -> GameStateResponse:
 
     tile_responses = [TileResponse.model_validate(t) for t in tiles]
 
+    print(f"🔍 [get_current_game_state] map_rows={game_state.map_rows}, map_cols={game_state.map_cols}")
+
     return GameStateResponse(
         step=game_state.current_step,
         max_steps=game_state.max_steps,
         is_game_over=game_state.is_game_over,
         player=player_response,
-        tiles=tile_responses
+        tiles=tile_responses,
+        map_shape=[game_state.map_rows, game_state.map_cols],
+        map_layers=["mask", "soil_moisture", "soil_temperature"]
     )
 
 

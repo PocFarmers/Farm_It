@@ -41,6 +41,8 @@ class GameStateResponse(BaseModel):
     is_game_over: bool = Field(description="Whether game has ended")
     player: PlayerResponse
     tiles: List[TileResponse]
+    map_shape: List[int] = Field(description="Map dimensions [rows, cols]")
+    map_layers: List[str] = Field(default=["mask", "soil_moisture", "soil_temperature"], description="Layer names")
 
 
 class TileActionRequest(BaseModel):
