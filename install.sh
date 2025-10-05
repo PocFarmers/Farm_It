@@ -16,15 +16,15 @@ if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
   if command -v python >/dev/null 2>&1; then
     PYTHON_BIN="python"
   else
-    echo "❌ Python 3 introuvable. Installez Python 3."
+    echo "❌ Python 3 not found. Install Python 3."
     exit 1
   fi
 fi
 
-echo "🔧 Python utilisé: $(${PYTHON_BIN} --version)"
+echo "🔧 Python version used: $(${PYTHON_BIN} --version)"
 
 # --- Backend ---
-echo "📦 Backend: création venv -> ${VENV_DIR}"
+echo "📦 Backend: venv creation -> ${VENV_DIR}"
 "${PYTHON_BIN}" -m venv "${VENV_DIR}"
 
 # shellcheck disable=SC1091
@@ -33,7 +33,7 @@ pip install --upgrade pip
 
 REQ_FILE="${BACKEND_DIR}/requirements.txt"
 if [[ ! -f "${REQ_FILE}" ]]; then
-  echo "❌ ${REQ_FILE} introuvable."
+  echo "❌ ${REQ_FILE} not found."
   exit 1
 fi
 
@@ -42,7 +42,7 @@ pip install -r "${REQ_FILE}"
 
 # --- Frontend ---
 if ! command -v npm >/dev/null 2>&1; then
-  echo "❌ npm introuvable. Installez Node.js (https://nodejs.org)."
+  echo "❌ npm found. Install Node.js (https://nodejs.org)."
   exit 1
 fi
 
@@ -51,5 +51,5 @@ pushd "${FRONTEND_DIR}" >/dev/null
 npm install
 popd >/dev/null
 
-echo "✅ Installation terminée."
-echo "➡️ Pour démarrer: ./run.sh"
+echo "✅ Installation completed."
+echo "➡️ To start: ./run.sh"

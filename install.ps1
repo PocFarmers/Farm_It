@@ -19,13 +19,13 @@ try {
   if (Get-Command python3 -ErrorAction SilentlyContinue) {
     $PythonExe = "python3"
   } else {
-    Write-Error "Python 3 n'est pas installé ou non détecté dans le PATH."
+    Write-Error "Python 3 isn't found ou not detected in PATH."
   }
 }
 Write-Host ("🔧 Python utilisé: " + (& $PythonExe --version))
 
 # Backend venv
-Write-Host "📦 Backend: création venv -> $VENV_DIR"
+Write-Host "📦 Backend: venv creation -> $VENV_DIR"
 & $PythonExe -m venv $VENV_DIR
 
 # Activer venv
@@ -35,7 +35,7 @@ $venvActivate = ".\.venv\Scripts\Activate.ps1"
 # Pip install
 $req = Join-Path $BACKEND_DIR "requirements.txt"
 if (-not (Test-Path $req)) {
-  Write-Error "$req introuvable."
+  Write-Error "$req not found."
 }
 Write-Host "📦 Backend: pip install -r $req"
 pip install --upgrade pip
@@ -43,12 +43,12 @@ pip install -r $req
 
 # Frontend
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-  Write-Error "npm n'est pas installé. Installez Node.js."
+  Write-Error "npm isn't installed. Install Node.js."
 }
 Write-Host "📦 Frontend: npm install"
 Push-Location $FRONTEND_DIR
 npm install
 Pop-Location
 
-Write-Host "✅ Installation terminée."
-Write-Host "➡️ Pour démarrer: .\run.ps1"
+Write-Host "✅ Installation completed."
+Write-Host "➡️ To start: .\run.ps1"
