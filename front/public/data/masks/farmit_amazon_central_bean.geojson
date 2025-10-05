@@ -4,7 +4,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "FarmIt Amazon Bean Polygon (~60 km) – Central Amazon ",
+        "name": "FarmIt Amazon Bean Polygon (~60 km) – Central Amazon",
         "note": "Bean-shaped polygon (~60 km scale). WGS84 (EPSG:4326)."
       },
       "geometry": {

@@ -4,9 +4,91 @@ import random
 import models
 import schemas
 import game_logic
+import geojson_handler
+import tif_handler
 
-def create_game_state(db: Session) -> models.GameState:
-    """Create a new game with initial parcels"""
+def create_game_state(db: Session, zone_key: str = 'paris') -> models.GameState:
+    """
+    Create a new game with initial parcels based on GeoJSON and TIF data
+    zone_key: 'paris', 'amazon', 'biskra', or 'kinshasa'
+    """
+    game = models.GameState(
+        current_stage=0,
+        shovels=10,
+        water_drops=10,
+        score=0
+    )
+    db.add(game)
+    db.commit()
+    db.refresh(game)
+
+    # Load zone configuration
+    try:
+        zone_info = geojson_handler.get_zone_info(zone_key)
+        zone_id = zone_info['zone_id']
+        tif_prefix = zone_info['tif_prefix']
+        use_tif_bounds = zone_info.get('use_tif_bounds', False)
+    except Exception as e:
+        print(f"Error loading zone {zone_key}: {e}")
+        # Fallback to old method
+        return create_game_state_legacy(db)
+
+    # Generate grid points based on TIF bounds or GeoJSON
+    if use_tif_bounds:
+        # Use TIF file bounds to generate parcels
+        bounds = tif_handler.get_tif_bounds_for_zone(tif_prefix)
+        if bounds:
+            grid_points = geojson_handler.create_grid_from_bounds(
+                min_lat=bounds['south'],
+                max_lat=bounds['north'],
+                min_lng=bounds['west'],
+                max_lng=bounds['east'],
+                grid_size=0.05  # Larger grid for TIF bounds
+            )
+        else:
+            print(f"Could not load TIF bounds for {tif_prefix}")
+            return create_game_state_legacy(db)
+    else:
+        # Use GeoJSON polygon
+        geojson_data = geojson_handler.load_geojson(zone_key)
+        grid_points = geojson_handler.create_grid_in_polygon(geojson_data, grid_size=0.01)
+
+    # Limit to 50 parcels (or use all if less than 50)
+    if len(grid_points) > 50:
+        # Sample 50 random points
+        grid_points = random.sample(grid_points, 50)
+
+    # Create parcels with TIF data
+    for i, point in enumerate(grid_points):
+        lat = point['lat']
+        lng = point['lng']
+
+        # Extract temperature and moisture from TIF files
+        temperature = tif_handler.get_temperature_at_point(tif_prefix, lat, lng)
+        moisture = tif_handler.get_soil_moisture_at_point(tif_prefix, lat, lng)
+
+        # 70% field, 30% forest
+        parcel_type = 'field' if random.random() < 0.7 else 'forest'
+
+        # First 3 parcels are owned
+        owned = i < 3
+
+        parcel = models.Parcel(
+            game_state_id=game.id,
+            lat=lat,
+            lng=lng,
+            zone_id=zone_id,
+            parcel_type=parcel_type,
+            owned=owned
+        )
+        db.add(parcel)
+
+    db.commit()
+    db.refresh(game)
+    return game
+
+def create_game_state_legacy(db: Session) -> models.GameState:
+    """Legacy method for creating game state (kept for fallback)"""
     game = models.GameState(
         current_stage=0,
         shovels=10,
@@ -18,9 +100,9 @@ def create_game_state(db: Session) -> models.GameState:
     db.refresh(game)
 
     # Generate 50 parcels around a random starting point
-    # Using France as base (around lat 46.6, lng 1.9)
-    base_lat = 46.6 + (random.random() - 0.5) * 2
-    base_lng = 1.9 + (random.random() - 0.5) * 2
+    # Using North Africa (Biskra, Algeria) as base (around lat 34.85, lng 6.11)
+    base_lat = 34.85 + (random.random() - 0.5) * 2
+    base_lng = 6.11 + (random.random() - 0.5) * 2
     tile_size = 0.01  # Approximately 1km
 
     zones = ['cold', 'arid', 'tropical', 'temperate']

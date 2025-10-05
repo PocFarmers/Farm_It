@@ -34,9 +34,12 @@ def root():
     return {"message": "Farm_It API", "version": "1.0.0"}
 
 @app.post("/api/game", response_model=schemas.GameState)
-def create_game(db: Session = Depends(get_db)):
-    """Create a new game"""
-    game = crud.create_game_state(db)
+def create_game(zone_key: str = 'paris', db: Session = Depends(get_db)):
+    """
+    Create a new game
+    zone_key: 'paris', 'amazon', 'biskra', or 'kinshasa'
+    """
+    game = crud.create_game_state(db, zone_key=zone_key)
     return game
 
 @app.get("/api/game/{game_id}", response_model=schemas.GameState)

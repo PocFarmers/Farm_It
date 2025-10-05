@@ -1,3 +1,6 @@
 INITAL.md
 PRPs/
 venv
+.env
+CLAUDE.md
+IMPLEMENTATION_NOTES.md

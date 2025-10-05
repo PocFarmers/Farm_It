@@ -112,3 +112,97 @@ def get_tif_bounds(tif_path: str):
     except Exception as e:
         print(f"Error getting bounds for {tif_path}: {e}")
         return None
+
+def get_tif_bounds_for_zone(zone_prefix: str):
+    """Get bounds from temperature TIF for a zone"""
+    tif_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "data",
+        "temperature",
+        f"{zone_prefix}_MOD11A2.061_LST_Day_1km_doy2023361000000_aid0001.tif"
+    )
+
+    if not os.path.exists(tif_path):
+        return None
+
+    return get_tif_bounds(tif_path)
+
+def extract_tif_value_at_point(tif_path: str, lat: float, lng: float):
+    """Extract TIF value at a specific geographic point (lat, lng)"""
+    try:
+        with rasterio.open(tif_path) as src:
+            # Convert lat/lng to pixel coordinates
+            row, col = src.index(lng, lat)
+
+            # Check if point is within bounds
+            if row < 0 or row >= src.height or col < 0 or col >= src.width:
+                return None
+
+            # Read value at this pixel
+            data = src.read(1)
+            value = data[row, col]
+
+            # Check for nodata
+            if src.nodata is not None and value == src.nodata:
+                return None
+
+            return float(value)
+    except Exception as e:
+        print(f"Error extracting value from {tif_path} at ({lat}, {lng}): {e}")
+        return None
+
+def get_temperature_at_point(zone_prefix: str, lat: float, lng: float) -> float:
+    """
+    Get temperature in Celsius at a specific point for a zone
+    zone_prefix: 'aride', 'froide', 'tempere', 'tropicale'
+    """
+    tif_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "data",
+        "temperature",
+        f"{zone_prefix}_MOD11A2.061_LST_Day_1km_doy2023361000000_aid0001.tif"
+    )
+
+    if not os.path.exists(tif_path):
+        print(f"Temperature TIF not found: {tif_path}")
+        return None
+
+    raw_value = extract_tif_value_at_point(tif_path, lat, lng)
+    if raw_value is None:
+        return None
+
+    # Convert MODIS LST to Celsius: (value * 0.02) - 273.15
+    temp_celsius = (raw_value * 0.02) - 273.15
+    return temp_celsius
+
+def get_soil_moisture_at_point(zone_prefix: str, lat: float, lng: float) -> float:
+    """
+    Get soil moisture (0-1 scale) at a specific point for a zone
+    zone_prefix: 'aride', 'froide', 'tempere', 'tropicale'
+    """
+    # Handle the special case for temperate zone file name
+    filename = f"{zone_prefix}_SPL3SMP_E.006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm_doy2024132000000_aid0001.tif"
+    if zone_prefix == 'tempere':
+        filename = "tempere_SPL3SMP_E.006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm_doy2024132000000_aid0001 copy.tif"
+
+    tif_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "data",
+        "humidite",
+        filename
+    )
+
+    if not os.path.exists(tif_path):
+        print(f"Soil moisture TIF not found: {tif_path}")
+        return None
+
+    raw_value = extract_tif_value_at_point(tif_path, lat, lng)
+    if raw_value is None:
+        return None
+
+    # Soil moisture is typically already in 0-1 range or needs specific scaling
+    # Adjust this based on actual data format
+    return raw_value / 100.0 if raw_value > 1 else raw_value
