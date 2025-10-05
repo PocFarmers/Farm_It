@@ -12,13 +12,13 @@ openmeteo = openmeteo_requests.Client(session = retry_session)
 def get_history_info(lat: float, lon: float):
     # Make sure all required weather variables are listed here
     # The order of variables in hourly or daily is important to assign them correctly below
-    url = "https://historical-forecast-api.open-meteo.com/v1/forecast"
+    url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
-    	"latitude": lat,
-    	"longitude": lon,
-    	"start_date": "2024-01-01",
-    	"end_date": "2024-12-31",
-    	"daily": ["soil_moisture_0_to_7cm_mean", "soil_temperature_28_to_100cm_mean"],
+    "latitude": 52.52,
+    "longitude": 13.41,
+    "start_date": "2024-01-01",
+    "end_date": "2024-12-31",
+    "daily": ["soil_moisture_0_to_7cm_mean", "soil_temperature_28_to_100cm_mean"],
     }
     responses = openmeteo.weather_api(url, params=params)
 
@@ -41,4 +41,4 @@ def get_history_info(lat: float, lon: float):
     daily_data["soil_temperature_28_to_100cm_mean"] = daily_soil_temperature_28_to_100cm_mean
 
     daily_dataframe = pd.DataFrame(data = daily_data)
-    print("\nDaily data\n", daily_dataframe)
+    return daily_dataframe

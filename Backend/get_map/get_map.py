@@ -1,5 +1,5 @@
 import os
-from Backend.get_map import get_history_info
+from get_history_info import get_history_info
 import numpy as np
 import math
 import random
@@ -109,8 +109,8 @@ def get_map():
 
     history_info=get_history_info(0.943227, 20.000000)
     
-    temp = history_info["soil_moisture_0_to_7cm_mean"]
-    hum = history_info["soil_temperature_28_to_100cm_mean"]
+    temp = history_info["soil_moisture_0_to_7cm_mean"][0]
+    hum = history_info["soil_temperature_28_to_100cm_mean"][0]
 
     ny, nx = mask.shape
     combined_matrix = np.zeros((ny, nx, 3))
@@ -121,5 +121,7 @@ def get_map():
     # Couche 1 et 2 : valeurs météo uniquement sur l’île
     combined_matrix[:, :, 1] = mask * temp
     combined_matrix[:, :, 2] = mask * hum
-
+    print(combined_matrix.shape)
     return combined_matrix
+
+get_map()
