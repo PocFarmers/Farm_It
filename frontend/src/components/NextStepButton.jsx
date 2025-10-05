@@ -49,14 +49,14 @@ export function NextStepButton() {
 
     return (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl border-4 border-green-700 p-4 min-w-[300px]">
+            <div className="bg-[#F5F2EA] rounded-lg shadow-2xl border-4 border-[#35613F] p-4 min-w-[300px]">
                 {/* Message Display */}
                 {message && (
                     <div
                         className={`mb-3 p-2 rounded text-sm font-medium text-center ${
                             message.type === 'success'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-[#35613F] text-white'
+                                : 'bg-[#A37039] text-white'
                         }`}
                     >
                         {message.text}
@@ -70,19 +70,18 @@ export function NextStepButton() {
                     className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all ${
                         isDisabled
                             ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                            : 'bg-[#35613F] hover:bg-[#2a4f32] text-white shadow-lg hover:shadow-xl transform hover:scale-105'
                     }`}
                 >
                     {loading ? (
                         <span className="flex items-center justify-center gap-2">
-                            <span className="animate-spin">⏳</span>
                             Processing...
                         </span>
                     ) : isGameOver ? (
-                        <span>🏁 Game Complete!</span>
+                        <span>Game Complete!</span>
                     ) : (
                         <span className="flex items-center justify-center gap-2">
-                            ⏩ Next Step
+                            Next Step
                             <span className="text-sm font-normal">
                                 ({currentStep + 1}/{maxSteps})
                             </span>
@@ -91,9 +90,9 @@ export function NextStepButton() {
                 </button>
 
                 {/* Step Info */}
-                <div className="mt-3 text-center text-xs text-gray-600">
+                <div className="mt-3 text-center text-xs text-[#35613F]">
                     {isGameOver ? (
-                        <span className="font-bold text-red-600">
+                        <span className="font-bold text-[#A37039]">
                             Maximum steps reached
                         </span>
                     ) : (

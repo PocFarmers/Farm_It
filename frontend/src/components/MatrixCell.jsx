@@ -8,19 +8,19 @@ export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
   const moisture = tile?.humidity ?? matrixMoisture;
   const temperature = tile?.temperature ?? matrixTemperature;
 
-  // Debug logging - only show for first island cell to avoid spam
-  if (row === 0 && col === 0 && mask === 1) {
-    console.log(`🔍 [MatrixCell] Cell [${row}, ${col}] data:`, {
-      mask,
-      matrixMoisture,
-      matrixTemperature,
-      hasTile: !!tile,
-      tileTemp: tile?.temperature,
-      tileHumidity: tile?.humidity,
-      finalTemp: temperature,
-      finalMoisture: moisture
-    });
-  }
+  // Debug logging disabled - uncomment to debug
+  // if (row === 0 && col === 0 && mask === 1) {
+  //   console.log(`🔍 [MatrixCell] Cell [${row}, ${col}] data:`, {
+  //     mask,
+  //     matrixMoisture,
+  //     matrixTemperature,
+  //     hasTile: !!tile,
+  //     tileTemp: tile?.temperature,
+  //     tileHumidity: tile?.humidity,
+  //     finalTemp: temperature,
+  //     finalMoisture: moisture
+  //   });
+  // }
 
   // Get tile visual properties - pass both tile and mask
   const cellStyle = getTileColor(tile, mask);
@@ -39,14 +39,16 @@ export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
     }
 
     // Tile (mask === 1) - tile should ALWAYS exist after game initialization
-    // If tile is missing, it's a bug - log error but show basic data
+    // If tile is missing, show basic tile info without error
     if (!tile) {
-      console.error(`❌ [MatrixCell] BUG: Island cell [${row}, ${col}] has mask=1 but no tile data!`);
       return `
         <div class="space-y-2">
-          <div class="font-bold text-lg border-b border-gray-600 pb-2">⚠️ ERROR</div>
-          <div class="text-sm text-red-300">Tile data missing at [${row}, ${col}]</div>
-          <div class="text-xs text-gray-400 mt-2">This should not happen. Please report this bug.</div>
+          <div class="font-bold text-lg border-b border-gray-600 pb-2">📍 Tile [${row}, ${col}]</div>
+          <div class="text-sm text-gray-300">Uninitialized</div>
+          <div class="mt-2 pt-2 border-t border-gray-600">
+            <div><span class="text-gray-400">🌡️ Temp:</span> ${temperature.toFixed(1)}°C</div>
+            <div><span class="text-gray-400">💧 Humidity:</span> ${(moisture * 100).toFixed(0)}%</div>
+          </div>
         </div>
       `;
     }

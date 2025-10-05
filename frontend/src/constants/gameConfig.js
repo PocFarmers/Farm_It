@@ -35,45 +35,45 @@ export const ZONE_NAMES = {
     4: 'Temperate Zone'
 };
 
-// Tile colors (Tailwind classes)
+// Tile colors - Agricultural Color Palette
 export const TILE_COLORS = {
     // Water/ocean
-    water: 'bg-blue-600 hover:bg-blue-500',
+    water: 'bg-blue-400 hover:bg-blue-300',
 
     // Unowned land
-    unowned: 'bg-amber-700 hover:bg-amber-600',
+    unowned: 'bg-[#A37039] hover:bg-[#8a5e30]',
 
     // Owned but empty
-    owned_empty: 'bg-green-700 hover:bg-green-600 ring-2 ring-yellow-400',
+    owned_empty: 'bg-[#35613F] hover:bg-[#2a4f32] ring-2 ring-[#F5A842]',
 
     // Crops by state
-    seed: 'bg-yellow-600 hover:bg-yellow-500 ring-2 ring-yellow-400',
-    growing: 'bg-lime-600 hover:bg-lime-500 ring-2 ring-yellow-400',
-    harvest: 'bg-orange-500 hover:bg-orange-400 ring-2 ring-yellow-400',
+    seed: 'bg-[#F5A842] hover:bg-[#e39835] ring-2 ring-[#A37039]',
+    growing: 'bg-[#8EB854] hover:bg-[#7da845] ring-2 ring-[#A37039]',
+    harvest: 'bg-[#F5A842] hover:bg-[#e39835] ring-2 ring-[#35613F]',
 
     // Forest
-    forest: 'bg-green-900 hover:bg-green-800',
-    forest_owned: 'bg-green-900 hover:bg-green-800 ring-2 ring-yellow-400'
+    forest: 'bg-[#35613F] hover:bg-[#2a4f32]',
+    forest_owned: 'bg-[#35613F] hover:bg-[#2a4f32] ring-2 ring-[#F5A842]'
 };
 
-// Tile icons/emojis
+// Tile icons/emojis - All removed for clean design
 export const TILE_ICONS = {
     water: '',
     unowned: '',
-    owned_empty: '🏞️',
-    seed: '🌱',
-    growing: '🌿',
-    harvest: '🌾',
-    forest: '🌲',
-    water_reserve: '💧',
-    firebreak: '🔥'
+    owned_empty: '',
+    seed: '',
+    growing: '',
+    harvest: '',
+    forest: '',
+    water_reserve: '',
+    firebreak: ''
 };
 
-// Resource icons
+// Resource icons - All removed for clean design
 export const RESOURCE_ICONS = {
-    shovel: '🥄',
-    drop: '💧',
-    score: '⭐'
+    shovel: '',
+    drop: '',
+    score: ''
 };
 
 // Game constants

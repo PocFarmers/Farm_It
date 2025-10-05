@@ -17,11 +17,11 @@ function App() {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-sky-400 to-blue-600">
-                <div className="bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-2xl text-center max-w-md">
-                    <h2 className="text-2xl font-bold mb-3 text-red-600">🌊 Erreur de connexion</h2>
-                    <p className="text-gray-700">{error}</p>
-                    <p className="mt-4 text-sm text-gray-500">Assurez-vous que le serveur est démarré</p>
+            <div className="flex items-center justify-center min-h-screen bg-[#F5F2EA]">
+                <div className="bg-white rounded-lg p-8 shadow-2xl text-center max-w-md border-4 border-[#A37039]">
+                    <h2 className="text-2xl font-bold mb-3 text-[#A37039]">Connection Error</h2>
+                    <p className="text-[#35613F]">{error}</p>
+                    <p className="mt-4 text-sm text-[#A37039]">Make sure the server is running</p>
                 </div>
             </div>
         );
@@ -33,15 +33,15 @@ function App() {
 
     return (
         <GameProvider refreshMap={refreshMap}>
-            <div className="min-h-screen bg-gradient-to-b from-sky-400 via-sky-500 to-blue-600 overflow-hidden">
-                {/* Header - Game UI Style */}
-                <header className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 shadow-lg border-b-4 border-green-800">
+            <div className="min-h-screen bg-[#F5F2EA] overflow-hidden">
+                {/* Header - Agricultural Theme */}
+                <header className="bg-[#35613F] text-white px-6 py-4 shadow-lg">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl">🏝️</span>
+                        <div className="flex items-center gap-4">
+                            <img src="/logo.png" alt="Farm It Logo" className="h-12 w-12 object-contain" />
                             <div>
-                                <h1 className="text-2xl font-bold tracking-tight">Farm It</h1>
-                                <p className="text-xs text-green-200">Votre île • {data.shape[0]}x{data.shape[1]} tuiles</p>
+                                <h1 className="text-3xl font-bold tracking-tight">Farm It</h1>
+                                <p className="text-sm text-[#F5F2EA] opacity-90">{data.shape[0]}x{data.shape[1]} tiles</p>
                             </div>
                         </div>
                         <ResourceDisplay />
