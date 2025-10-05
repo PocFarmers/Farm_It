@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import math
 import random
@@ -5,6 +6,7 @@ import geopandas as gpd
 from shapely.geometry import Polygon, Point
 import rasterio
 from skimage.transform import resize
+import matplotlib.pyplot as plt
 
 def generate_bean_gdf_and_mask(grid_size=(200,200), scale_range=(0.2,0.5),
                                R_km=30.0, e=0.35, squash=0.75, x_offset_km=4.5, N=240):
@@ -76,15 +78,41 @@ def add_tif_layers_to_mask(mask, gdf, tif_files):
 
     return combined_matrix
 
+def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", layer_names=None):
+    """
+    Enregistre la matrice combinée dans un fichier txt.
+    Chaque ligne = une cellule de la grille
+    Colonnes = couche(s)
+    """
+    ny, nx, n_layers = combined_matrix.shape
 
+    if layer_names is None:
+        layer_names = [f"layer_{i}" for i in range(n_layers)]
+
+    # Crée l'en-tête
+    header = "i,j," + ",".join(layer_names)
+
+    # Ouvre le fichier
+    with open(filename, "w") as f:
+        f.write(header + "\n")
+        for i in range(ny):
+            for j in range(nx):
+                values = combined_matrix[i,j,:]
+                line = f"{i},{j}," + ",".join(map(str, values))
+                f.write(line + "\n")
+
+    print(f"Matrice sauvegardée dans {filename}")
+    
 def get_map():
     gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.2,0.4))
 
     tif_files = {
-        "temperature": "~/Farm_It/data/temperature/froide_MOD11A2.061_LST_Day_1km_doy2023361000000_aid0001.tif",
-        "humidity": "~/Farm_It/data/humidite/tropicale_SPL3SMP_E.006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm_doy2024132000000_aid0001.tif"
+        "temperature": os.path.expanduser("~/Farm_It/data/temperature/froide_MOD11A2.061_LST_Day_1km_doy2023361000000_aid0001.tif"),
+        "humidity": os.path.expanduser("~/Farm_It/data/humidite/tropicale_SPL3SMP_E.006_Soil_Moisture_Retrieval_Data_PM_soil_moisture_pm_doy2024132000000_aid0001.tif")
     }
 
     combined_matrix = add_tif_layers_to_mask(mask, gdf, tif_files)
+    layer_names = ["mask", "temperature", "humidity"]
+    save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", layer_names=layer_names)
 
     return combined_matrix
