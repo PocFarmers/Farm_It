@@ -1,5 +1,6 @@
 import os
-from get_map.get_history_info import get_history_info
+from download_files import generate_grid_histories_25
+from get_history_info import get_history_info
 import numpy as np
 import math
 import random
@@ -103,23 +104,44 @@ def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", la
                 f.write(line + "\n")
 
     print(f"Matrice sauvegardée dans {filename}")
-    
+  
 def get_map():
-    gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.4,0.8))
+    # 1️⃣ Générer l'île et le mask
+    gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.4, 0.8))
 
-    history_info=get_history_info(0.943227, 20.000000)
-    
-    temp = history_info["soil_moisture_0_to_7cm_mean"][0]
-    hum = history_info["soil_temperature_28_to_100cm_mean"][0]
+    # 2️⃣ Générer 25 histories autour du centre
+    histories = generate_grid_histories_25(0.943227, 20.000000)
 
     ny, nx = mask.shape
-    combined_matrix = np.zeros((ny, nx, 3))
+    combined_matrix = np.zeros((ny, nx, 3))  # 0=mask, 1=temp, 2=hum
 
-    # Couche 0 : présence de l’île
+    # 3️⃣ Couche 0 : mask
     combined_matrix[:, :, 0] = mask
 
-    # Couche 1 et 2 : valeurs météo uniquement sur l’île
-    combined_matrix[:, :, 1] = mask * temp
-    combined_matrix[:, :, 2] = mask * hum
+    # 4️⃣ Définir les blocs pour chaque history
+    n_blocks_side = 5  # 5x5 = 25 points
+    block_h = ny // n_blocks_side
+    block_w = nx // n_blocks_side
+
+    idx = 0
+    for by in range(n_blocks_side):
+        for bx in range(n_blocks_side):
+            if idx >= len(histories):
+                break
+
+            hist = histories[idx]
+            
+            temp = hist["T2M"].iloc[0]
+            hum = hist["RH2M"].iloc[0]
+
+            y0, y1 = by * block_h, (by + 1) * block_h
+            x0, x1 = bx * block_w, (bx + 1) * block_w
+
+            # Remplir uniquement les cellules de l'île
+            mask_block = mask[y0:y1, x0:x1]
+            combined_matrix[y0:y1, x0:x1, 1] = mask_block * temp
+            combined_matrix[y0:y1, x0:x1, 2] = mask_block * hum
+
+            idx += 1
     print(combined_matrix.shape)
     return combined_matrix
