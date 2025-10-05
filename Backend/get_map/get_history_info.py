@@ -14,8 +14,8 @@ def get_history_info(lat: float, lon: float):
     # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
-    "latitude": 52.52,
-    "longitude": 13.41,
+    "latitude": lat,
+    "longitude": lon,
     "start_date": "2024-01-01",
     "end_date": "2024-12-31",
     "daily": ["soil_moisture_0_to_7cm_mean", "soil_temperature_28_to_100cm_mean"],
