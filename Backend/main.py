@@ -1,5 +1,7 @@
+from chatbot import ChatRequest, ChatResponse, build_input_blocks
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from openai import OpenAI
 from pydantic import BaseModel
 from typing import Optional
 import sys
@@ -91,6 +93,46 @@ async def api_get_event(request: EventRequest):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    if not client.api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY manquant dans l'environnement.")
+
+    try:
+        input_blocks = build_input_blocks(
+            system=req.system,
+            history=req.history,
+            user_message=req.message,
+            context=req.context
+        )
+
+        resp = client.responses.create(
+            model=req.model,
+            input=input_blocks,
+        )
+
+        text = ""
+        if resp.output:
+            for block in resp.output:
+                if block.type == "message":
+                    for part in block.content:
+                        if part.type == "output_text":
+                            text += part.text
+        text = text.strip()
+
+        usage_in = getattr(resp, "usage", None).input_tokens if getattr(resp, "usage", None) else None
+        usage_out = getattr(resp, "usage", None).output_tokens if getattr(resp, "usage", None) else None
+
+        return ChatResponse(
+            text=text,
+            model=req.model,
+            usage_input_tokens=usage_in,
+            usage_output_tokens=usage_out
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur OpenAI: {e}")
 
 if __name__ == "__main__":
     import uvicorn
