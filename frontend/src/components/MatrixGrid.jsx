@@ -42,7 +42,15 @@ export function MatrixGrid({ data, layers }) {
 
   // Create tile map by grid position (i,j) for quick lookup
   const tileMap = useMemo(() => {
-    if (!gameState?.tiles) return {};
+    if (!gameState?.tiles) {
+      console.log('🗺️ [MatrixGrid] No gameState.tiles - game not initialized yet');
+      return {};
+    }
+
+    console.log('🗺️ [MatrixGrid] Building tileMap from gameState.tiles:', {
+      tilesCount: gameState.tiles.length,
+      firstTile: gameState.tiles[0]
+    });
 
     const map = {};
     gameState.tiles.forEach(tile => {
@@ -50,8 +58,39 @@ export function MatrixGrid({ data, layers }) {
       const key = `${tile.grid_i},${tile.grid_j}`;
       map[key] = tile;
     });
+
+    console.log(`🗺️ [MatrixGrid] Created tileMap with ${Object.keys(map).length} tiles`);
+    console.log('🗺️ [MatrixGrid] Sample tileMap keys:', Object.keys(map).slice(0, 5));
+
+    // Verify all island cells have tiles
+    if (data?.data) {
+      let islandCells = 0;
+      let missingTiles = 0;
+      data.data.forEach((row, i) => {
+        row.forEach((cell, j) => {
+          const mask = cell[0];
+          if (mask === 1) {
+            islandCells++;
+            const key = `${i},${j}`;
+            if (!map[key]) {
+              missingTiles++;
+              if (missingTiles <= 5) {
+                console.error(`❌ [MatrixGrid] Missing tile for island cell [${i}, ${j}]`);
+              }
+            }
+          }
+        });
+      });
+      console.log(`🗺️ [MatrixGrid] Verification: ${islandCells} island cells, ${Object.keys(map).length} tiles in DB`);
+      if (missingTiles > 0) {
+        console.error(`❌ [MatrixGrid] ${missingTiles} island cells are missing tile data!`);
+      } else {
+        console.log('✅ [MatrixGrid] All island cells have tile data');
+      }
+    }
+
     return map;
-  }, [gameState?.tiles]);
+  }, [gameState?.tiles, data]);
 
   // Helper to get tile by grid position
   const getTileByPosition = (row, col) => {

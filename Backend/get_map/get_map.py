@@ -145,6 +145,8 @@
 #             idx += 1
 #     print(combined_matrix.shape)
 #     return combined_matrix
+
+
 import os
 from get_map.get_history_info import get_history_info
 import numpy as np
@@ -251,15 +253,17 @@ def save_combined_matrix_txt(combined_matrix, filename="combined_matrix.txt", la
 
     print(f"Matrice sauvegardée dans {filename}")
     
+
+history_info=get_history_info(0.943227, 20.000000)
+
+TEMP = history_info["soil_moisture_0_to_7cm_mean"]
+HUM = history_info["soil_temperature_28_to_100cm_mean"]
+
 def get_map():
     gdf, mask = generate_bean_gdf_and_mask(scale_range=(0.4,0.8))
 
-    history_info=get_history_info(0.943227, 20.000000)
-    print(f"history_info keys: {history_info.keys() if hasattr(history_info, 'keys') else type(history_info)}")
-    print(f"history_info: {history_info}")
-
-    temp = history_info["soil_moisture_0_to_7cm_mean"][0]
-    hum = history_info["soil_temperature_28_to_100cm_mean"][0]
+    temp = TEMP[0]
+    hum = HUM[0]
 
     ny, nx = mask.shape
     combined_matrix = np.zeros((ny, nx, 3))

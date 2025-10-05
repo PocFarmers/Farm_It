@@ -8,7 +8,7 @@ import { TILE_COLORS, TILE_ICONS, ACTION_COSTS } from '../constants/gameConfig';
 /**
  * Get Tailwind color class for a tile based on its state
  * @param {Object} tile - The tile data from game state (can be null)
- * @param {number} mask - The mask value from matrix (0 = water, 1 = land)
+ * @param {number} mask - The mask value from matrix (0 = water, 1 = tile)
  */
 export function getTileColor(tile, mask) {
     // Water/ocean (mask = 0)
@@ -16,9 +16,9 @@ export function getTileColor(tile, mask) {
         return TILE_COLORS.water;
     }
 
-    // Land without tile data yet - show as unowned
+    // Tile without data - should not happen but show as error
     if (!tile) {
-        return TILE_COLORS.unowned;
+        return 'bg-red-500';
     }
 
     // Owned tile with crop
@@ -39,14 +39,14 @@ export function getTileColor(tile, mask) {
         return TILE_COLORS.forest;
     }
 
-    // Unowned land
+    // Unowned tile
     return TILE_COLORS.unowned;
 }
 
 /**
  * Get icon/emoji for a tile based on its state
  * @param {Object} tile - The tile data from game state (can be null)
- * @param {number} mask - The mask value from matrix (0 = water, 1 = land)
+ * @param {number} mask - The mask value from matrix (0 = water, 1 = tile)
  */
 export function getTileIcon(tile, mask) {
     // Water - no icon
@@ -54,9 +54,9 @@ export function getTileIcon(tile, mask) {
         return '';
     }
 
-    // Land without tile data - no icon
+    // Tile without data - show error
     if (!tile) {
-        return '';
+        return '⚠️';
     }
 
     // Show structures as overlay

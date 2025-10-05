@@ -8,7 +8,7 @@ import { fetchGameState, startNewGame, advanceStep } from '../utils/api';
 
 const GameContext = createContext(null);
 
-export function GameProvider({ children }) {
+export function GameProvider({ children, refreshMap }) {
     const [gameState, setGameState] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,8 +18,14 @@ export function GameProvider({ children }) {
     // Fetch game state from backend
     const refreshGameState = useCallback(async () => {
         try {
+            console.log('🔄 [refreshGameState] Fetching game state from backend');
             setError(null);
             const data = await fetchGameState();
+            console.log('🔄 [refreshGameState] Received game state:', {
+                step: data.step,
+                tilesCount: data.tiles?.length,
+                mapShape: data.map_shape
+            });
             setGameState(data);
 
             // Check if game is over (50 steps reached)
@@ -30,8 +36,10 @@ export function GameProvider({ children }) {
             return data;
         } catch (err) {
             if (err.message === 'GAME_NOT_INITIALIZED') {
+                console.log('ℹ️ [refreshGameState] Game not initialized');
                 setGameState(null);
             } else {
+                console.error('❌ [refreshGameState] Error:', err.message);
                 setError(err.message);
             }
             throw err;
@@ -41,13 +49,21 @@ export function GameProvider({ children }) {
     // Initialize game
     const initializeGame = useCallback(async () => {
         try {
+            console.log('🎮 [initializeGame] Starting new game');
             setLoading(true);
             setError(null);
-            const data = await startNewGame();
-            setGameState(data);
+            // Start new game and get full game state
+            const gameState = await startNewGame();
+            console.log('🎮 [initializeGame] Game started, received state:', {
+                step: gameState.step,
+                tilesCount: gameState.tiles?.length,
+                mapShape: gameState.map_shape
+            });
+            setGameState(gameState);
             setIsGameOver(false);
-            return data;
+            return gameState;
         } catch (err) {
+            console.error('❌ [initializeGame] Error:', err.message);
             setError(err.message);
             throw err;
         } finally {
@@ -58,26 +74,35 @@ export function GameProvider({ children }) {
     // Advance to next step
     const nextStep = useCallback(async () => {
         try {
+            console.log('⏭️ [nextStep] Advancing to next step...');
             setError(null);
-            const data = await advanceStep();
-            setGameState(data);
+            const stepResult = await advanceStep();
+            console.log('⏭️ [nextStep] Step advanced, result:', stepResult);
 
-            // Check if game is now over
-            if (data.step >= 50) {
-                setIsGameOver(true);
-            }
+            // Refresh full game state to get updated tiles
+            console.log('⏭️ [nextStep] Refreshing game state to get updated tiles...');
+            const fullState = await refreshGameState();
+            console.log('⏭️ [nextStep] Game state refreshed:', {
+                step: fullState.step,
+                tilesCount: fullState.tiles?.length,
+                firstTileTemp: fullState.tiles?.[0]?.temperature,
+                firstTileHumidity: fullState.tiles?.[0]?.humidity
+            });
 
-            return data;
+            return fullState;
         } catch (err) {
+            console.error('❌ [nextStep] Error:', err);
             setError(err.message);
             throw err;
         }
-    }, []);
+    }, [refreshGameState]);
 
     // Load game state on mount
     useEffect(() => {
+        console.log('🏁 [GameContext] Mounting - checking for existing game');
         refreshGameState()
             .catch(() => {
+                console.log('ℹ️ [GameContext] No existing game found, showing init screen');
                 // Game not initialized, that's ok
             })
             .finally(() => {
@@ -135,6 +160,7 @@ export function GameProvider({ children }) {
         setSelectedTile,
         isGameOver,
         refreshGameState,
+        refreshMap,
         initializeGame,
         nextStep,
         getPlayer,
