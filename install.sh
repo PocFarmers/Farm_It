@@ -21,10 +21,10 @@ if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
   fi
 fi
 
-echo "🔧 Python utilisé: $(${PYTHON_BIN} --version)"
+echo "🔧 Python version used: $(${PYTHON_BIN} --version)"
 
 # --- Backend ---
-echo "📦 Backend: création venv -> ${VENV_DIR}"
+echo "📦 Backend: venv creation -> ${VENV_DIR}"
 "${PYTHON_BIN}" -m venv "${VENV_DIR}"
 
 # shellcheck disable=SC1091
@@ -52,4 +52,4 @@ npm install
 popd >/dev/null
 
 echo "✅ Installation completed."
-echo "➡️ Pour démarrer: ./run.sh"
+echo "➡️ To start: ./run.sh"

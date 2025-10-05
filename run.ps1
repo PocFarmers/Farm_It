@@ -16,16 +16,16 @@ if ([string]::IsNullOrWhiteSpace($PORT)) { $PORT = "8000" }
 # Activer venv
 $venvActivate = ".\.venv\Scripts\Activate.ps1"
 if (-not (Test-Path $venvActivate)) {
-  Write-Error "Venv introuvable ($VENV_DIR). Lancez d'abord .\install_all.ps1"
+  Write-Error "Venv not found ($VENV_DIR). Launch .\install_all.ps1 first"
 }
 . $venvActivate
 
 # Vérifs
 if (-not (Get-Command uvicorn -ErrorAction SilentlyContinue)) {
-  Write-Error "uvicorn non trouvé (pip install uvicorn)"
+  Write-Error "uvicorn not found (pip install uvicorn)"
 }
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-  Write-Error "npm non trouvé (installez Node.js)"
+  Write-Error "npm not found (install Node.js)"
 }
 
 # Démarrage backend
@@ -40,7 +40,7 @@ try {
   Pop-Location
 }
 finally {
-  Write-Host "🛑 Arrêt Backend"
+  Write-Host "🛑 Stop Backend"
   if ($backend -and -not $backend.HasExited) {
     Stop-Process -Id $backend.Id -Force
   }
