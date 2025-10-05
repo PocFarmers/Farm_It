@@ -119,43 +119,43 @@ export function TileActionModal() {
             className="backdrop:bg-black/50 bg-white rounded-lg shadow-2xl p-0 max-w-md w-full"
             onClose={closeModal}
         >
-            <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-4 rounded-t-lg">
-                <h2 className="text-2xl font-bold">🎯 Tile Actions</h2>
-                <p className="text-sm text-green-100">Tile ID: {selectedTile.id}</p>
+            <div className="bg-[#35613F] text-white px-6 py-4 rounded-t-lg">
+                <h2 className="text-2xl font-bold">Tile Actions</h2>
+                <p className="text-sm text-[#F5F2EA] opacity-90">Tile ID: {selectedTile.id}</p>
             </div>
 
             <div className="p-6">
                 {/* Tile Information */}
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-3">📋 Tile Info</h3>
+                <div className="mb-6 p-4 bg-[#F5F2EA] rounded-lg border-2 border-[#A37039]">
+                    <h3 className="font-semibold text-[#35613F] mb-3 text-lg">Tile Info</h3>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                            <span className="text-gray-600">Zone:</span>
-                            <span className="font-semibold text-gray-900">{zoneName}</span>
+                            <span className="text-[#A37039]">Zone:</span>
+                            <span className="font-semibold text-[#35613F]">{zoneName}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-600">Type:</span>
-                            <span className="font-semibold text-gray-900">{typeName}</span>
+                            <span className="text-[#A37039]">Type:</span>
+                            <span className="font-semibold text-[#35613F]">{typeName}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-600">Owner:</span>
-                            <span className="font-semibold text-gray-900">
-                                {isOwned ? '✓ You' : 'None'}
+                            <span className="text-[#A37039]">Owner:</span>
+                            <span className="font-semibold text-[#35613F]">
+                                {isOwned ? 'You' : 'None'}
                             </span>
                         </div>
                         {selectedTile.tile_state && (
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Crop State:</span>
-                                <span className="font-semibold text-gray-900">
+                                <span className="text-[#A37039]">Crop State:</span>
+                                <span className="font-semibold text-[#35613F]">
                                     {CROP_STATE_NAMES[selectedTile.tile_state]}
                                 </span>
                             </div>
                         )}
                         {selectedTile.has_water_reserve && (
-                            <div className="text-blue-600 font-medium">💧 Has Water Reserve</div>
+                            <div className="text-[#35613F] font-medium">Has Water Reserve</div>
                         )}
                         {selectedTile.has_firebreak && (
-                            <div className="text-orange-600 font-medium">🔥 Has Firebreak</div>
+                            <div className="text-[#F5A842] font-medium">Has Firebreak</div>
                         )}
                     </div>
                 </div>
@@ -165,8 +165,8 @@ export function TileActionModal() {
                     <div
                         className={`mb-4 p-3 rounded-lg font-medium ${
                             actionMessage.type === 'success'
-                                ? 'bg-green-100 text-green-800 border border-green-300'
-                                : 'bg-red-100 text-red-800 border border-red-300'
+                                ? 'bg-[#35613F] text-white border-2 border-[#F5A842]'
+                                : 'bg-[#A37039] text-white border-2 border-[#35613F]'
                         }`}
                     >
                         {actionMessage.text}
@@ -175,7 +175,7 @@ export function TileActionModal() {
 
                 {/* Available Actions */}
                 <div className="mb-6">
-                    <h3 className="font-semibold text-gray-900 mb-3">⚡ Available Actions</h3>
+                    <h3 className="font-semibold text-[#35613F] mb-3 text-lg">Available Actions</h3>
                     <div className="space-y-2">
                         {actions.map(action => {
                             const canPerform = canPerformAction(action.id, selectedTile, player);
@@ -193,13 +193,13 @@ export function TileActionModal() {
                                     className={`w-full px-4 py-3 rounded-lg font-medium text-left transition-colors ${
                                         isDisabled
                                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                            : 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
+                                            : 'bg-[#35613F] hover:bg-[#2a4f32] text-white cursor-pointer'
                                     }`}
                                 >
                                     <div className="flex justify-between items-center">
                                         <span>{formatActionButton(action.id, cost)}</span>
                                         {!hasEnoughResources && (
-                                            <span className="text-xs text-red-300">
+                                            <span className="text-xs text-[#F5A842]">
                                                 Insufficient resources
                                             </span>
                                         )}
@@ -213,7 +213,7 @@ export function TileActionModal() {
                 {/* Close Button */}
                 <button
                     onClick={closeModal}
-                    className="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors"
+                    className="w-full px-4 py-3 bg-[#A37039] hover:bg-[#8a5e30] text-white font-medium rounded-lg transition-colors"
                     disabled={actionLoading}
                 >
                     Close

@@ -42,7 +42,9 @@ export function MatrixGrid({ data, layers }) {
 
   // Create tile map by grid position (i,j) for quick lookup
   const tileMap = useMemo(() => {
-    if (!gameState?.tiles) return {};
+    if (!gameState?.tiles) {
+      return {};
+    }
 
     const map = {};
     gameState.tiles.forEach(tile => {
@@ -50,6 +52,7 @@ export function MatrixGrid({ data, layers }) {
       const key = `${tile.grid_i},${tile.grid_j}`;
       map[key] = tile;
     });
+
     return map;
   }, [gameState?.tiles]);
 
@@ -104,70 +107,9 @@ export function MatrixGrid({ data, layers }) {
 
   return (
     <div className="flex h-[calc(100vh-80px)]">
-      {/* Panneau latéral gauche - 1/4 largeur */}
-      <div className="w-1/4 bg-gradient-to-br from-green-700 to-green-900 p-6 text-white overflow-y-auto">
-        <GameStatsPanel />
-
-        <div className="mt-6 space-y-4">
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h3 className="font-bold mb-3 flex items-center gap-2">
-              <span>🎮</span>
-              Contrôles
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-green-200">🖱️</span>
-                <span>Molette pour zoomer</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-200">✋</span>
-                <span>Clic + glisser pour déplacer</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-200">👆</span>
-                <span>Cliquer sur tuile pour agir</span>
-              </div>
-            </div>
-            <button
-              onClick={resetView}
-              className="mt-3 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded transition-colors"
-            >
-              🔄 Réinitialiser vue
-            </button>
-          </div>
-
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h3 className="font-bold mb-3 flex items-center gap-2">
-              <span>🔍</span>
-              Zoom
-            </h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-green-200">Niveau:</span>
-                <span className="font-bold">{(zoom * 100).toFixed(0)}%</span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setZoom((z) => Math.max(z * 0.8, 0.25))}
-                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-bold py-1 px-2 rounded transition-colors"
-                >
-                  −
-                </button>
-                <button
-                  onClick={() => setZoom((z) => Math.min(z * 1.25, 4))}
-                  className="flex-1 bg-white/20 hover:bg-white/30 text-white font-bold py-1 px-2 rounded transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Grille principale - 3/4 largeur */}
       <div
-        className="w-3/4 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center overflow-hidden relative"
+        className="w-3/4 bg-[#F5F2EA] flex items-center justify-center overflow-hidden relative"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -183,7 +125,7 @@ export function MatrixGrid({ data, layers }) {
           }}
         >
           <div
-            className="grid gap-0 shadow-2xl border-4 border-white/30"
+            className="grid gap-0 shadow-2xl border-4 border-[#35613F]"
             style={{
               gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
               gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
@@ -211,9 +153,14 @@ export function MatrixGrid({ data, layers }) {
 
         <Tooltip
           id="matrix-cell"
-          className="!bg-gray-900/95 !text-white !rounded-lg !shadow-xl !px-4 !py-3 !backdrop-blur-md"
+          className="!bg-[#35613F] !text-white !rounded-lg !shadow-xl !px-4 !py-3"
           style={{ zIndex: 1000 }}
         />
+      </div>
+
+      {/* Panneau latéral droit - 1/4 largeur - Game Stats Only */}
+      <div className="w-1/4 bg-[#35613F] p-6 overflow-y-auto">
+        <GameStatsPanel />
       </div>
     </div>
   );

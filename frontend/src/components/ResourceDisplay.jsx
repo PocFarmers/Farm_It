@@ -18,23 +18,23 @@ export function ResourceDisplay() {
     return (
         <div className="flex gap-3 text-sm">
             {/* Shovels */}
-            <div className="bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm border-2 border-white/30 hover:bg-white/30 transition-colors">
-                <span className="font-bold text-white">
+            <div className="bg-[#A37039] px-5 py-2 rounded-lg border-2 border-[#35613F] transition-colors">
+                <span className="font-bold text-white text-base flex items-center gap-2">
                     {RESOURCE_ICONS.shovel} {shovels}
                 </span>
             </div>
 
             {/* Drops */}
-            <div className="bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm border-2 border-white/30 hover:bg-white/30 transition-colors">
-                <span className="font-bold text-white">
+            <div className="bg-[#35613F] px-5 py-2 rounded-lg border-2 border-[#A37039] transition-colors">
+                <span className="font-bold text-white text-base flex items-center gap-2">
                     {RESOURCE_ICONS.drop} {drops}
                 </span>
             </div>
 
             {/* Score */}
-            <div className="bg-yellow-400/90 px-4 py-2 rounded-full backdrop-blur-sm border-2 border-yellow-500 hover:bg-yellow-500 transition-colors shadow-lg">
-                <span className="font-bold text-yellow-900">
-                    {RESOURCE_ICONS.score} {score}
+            <div className="bg-[#F5A842] px-5 py-2 rounded-lg border-2 border-[#A37039] transition-colors shadow-lg">
+                <span className="font-bold text-[#35613F] text-base">
+                    Score: {score}
                 </span>
             </div>
         </div>

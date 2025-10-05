@@ -1,8 +1,26 @@
 import { getTileColor, getTileIcon } from '../utils/tileHelpers';
 import { ZONE_NAMES, TILE_TYPE_NAMES, CROP_STATE_NAMES } from '../constants/gameConfig';
 
-export function MatrixCell({ row, col, values, layers, cellSize, tile, onTileClick }) {
-  const [mask, moisture, temperature] = values;
+export function MatrixCell({ row, col, values, cellSize, tile, onTileClick }) {
+  const [mask, matrixMoisture, matrixTemperature] = values;
+
+  // Use tile data if available (from game state), otherwise use matrix data (from map)
+  const moisture = tile?.humidity ?? matrixMoisture;
+  const temperature = tile?.temperature ?? matrixTemperature;
+
+  // Debug logging disabled - uncomment to debug
+  // if (row === 0 && col === 0 && mask === 1) {
+  //   console.log(`🔍 [MatrixCell] Cell [${row}, ${col}] data:`, {
+  //     mask,
+  //     matrixMoisture,
+  //     matrixTemperature,
+  //     hasTile: !!tile,
+  //     tileTemp: tile?.temperature,
+  //     tileHumidity: tile?.humidity,
+  //     finalTemp: temperature,
+  //     finalMoisture: moisture
+  //   });
+  // }
 
   // Get tile visual properties - pass both tile and mask
   const cellStyle = getTileColor(tile, mask);
@@ -10,7 +28,7 @@ export function MatrixCell({ row, col, values, layers, cellSize, tile, onTileCli
 
   // Build tooltip content with game information
   const buildTooltip = () => {
-    // Check mask first - mask === 0 means water
+    // ONLY two states: water (mask === 0) or tile (mask === 1)
     if (mask === 0) {
       return `
         <div class="space-y-2">
@@ -20,13 +38,17 @@ export function MatrixCell({ row, col, values, layers, cellSize, tile, onTileCli
       `;
     }
 
-    // Land tile (mask === 1) but no game tile data yet
+    // Tile (mask === 1) - tile should ALWAYS exist after game initialization
+    // If tile is missing, show basic tile info without error
     if (!tile) {
       return `
         <div class="space-y-2">
-          <div class="font-bold text-lg border-b border-gray-600 pb-2">🏝️ Land</div>
-          <div class="text-sm text-gray-300">Position [${row}, ${col}]</div>
-          <div class="text-xs text-gray-400 mt-2">Not yet in game</div>
+          <div class="font-bold text-lg border-b border-gray-600 pb-2">📍 Tile [${row}, ${col}]</div>
+          <div class="text-sm text-gray-300">Uninitialized</div>
+          <div class="mt-2 pt-2 border-t border-gray-600">
+            <div><span class="text-gray-400">🌡️ Temp:</span> ${temperature.toFixed(1)}°C</div>
+            <div><span class="text-gray-400">💧 Humidity:</span> ${(moisture * 100).toFixed(0)}%</div>
+          </div>
         </div>
       `;
     }
@@ -71,8 +93,7 @@ export function MatrixCell({ row, col, values, layers, cellSize, tile, onTileCli
 
   const handleClick = (e) => {
     e.stopPropagation();
-    // Only allow clicks on land tiles (mask === 1)
-    // If tile exists in game state, trigger action modal
+    // Only allow clicks on tiles (mask === 1), not water
     if (mask === 1 && tile && onTileClick) {
       onTileClick(tile);
     }

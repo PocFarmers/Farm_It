@@ -1,0 +1,13 @@
+Maintenant ton objectif est de refaire tout le front, Je veux que tu refasse l'UI en utilisant cette palette de couleur.
+je veux que l'app fasse penser a l'agriculture tous en ayant un design moderne.
+
+palette de couleur:
+
+Vert foncé (Primaire) : #35613F
+Beige clair (Arrière-plan) : #F5F2EA
+Marron (Champs) : #A37039
+Orange (Soleil) : #F5A842
+
+je veux que dans la sidebar a droite, il y est que Game Stats et les autres infos disparaisse.
+Je veux que tu enleve toutes les icones
+je veux que en logo tu met le "logo.png" dans le dossier public du front

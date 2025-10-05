@@ -26,76 +26,76 @@ export function GameStatsPanel() {
     ).length || 0;
 
     return (
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+        <div className="bg-[#F5F2EA] rounded-lg p-5 shadow-lg">
             {/* Header */}
-            <div className="text-center mb-4 pb-3 border-b-2 border-white/30">
-                <h2 className="text-xl font-bold text-white">📊 Game Stats</h2>
+            <div className="text-center mb-5 pb-4 border-b-2 border-[#A37039]">
+                <h2 className="text-2xl font-bold text-[#35613F]">Game Stats</h2>
             </div>
 
             {/* Step Progress */}
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg border-2 border-blue-400">
-                <div className="text-sm text-blue-900 font-semibold mb-1">Current Step</div>
+            <div className="mb-4 p-4 bg-white rounded-lg border-2 border-[#A37039] shadow-sm">
+                <div className="text-sm text-[#35613F] font-semibold mb-2">Current Step</div>
                 <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-900">{currentStep}</span>
-                    <span className="text-sm text-blue-700">/ {maxSteps}</span>
+                    <span className="text-3xl font-bold text-[#35613F]">{currentStep}</span>
+                    <span className="text-base text-[#A37039] font-medium">/ {maxSteps}</span>
                 </div>
-                <div className="mt-2 bg-blue-300 rounded-full h-2 overflow-hidden">
+                <div className="mt-3 bg-[#F5F2EA] rounded-full h-3 overflow-hidden border border-[#A37039]">
                     <div
-                        className="bg-blue-600 h-full transition-all duration-500"
+                        className="bg-[#F5A842] h-full transition-all duration-500"
                         style={{ width: `${(currentStep / maxSteps) * 100}%` }}
                     />
                 </div>
             </div>
 
             {/* Tiles & Fields */}
-            <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded border border-green-300">
-                    <span className="text-sm font-medium text-green-900">🏞️ Owned Tiles</span>
-                    <span className="text-lg font-bold text-green-700">{ownedTiles}</span>
+            <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-[#35613F] shadow-sm">
+                    <span className="text-sm font-semibold text-[#35613F]">Owned Tiles</span>
+                    <span className="text-xl font-bold text-[#35613F]">{ownedTiles}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2 bg-amber-50 rounded border border-amber-300">
-                    <span className="text-sm font-medium text-amber-900">🌾 Fields</span>
-                    <span className="text-lg font-bold text-amber-700">{fields}</span>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-[#A37039] shadow-sm">
+                    <span className="text-sm font-semibold text-[#A37039]">Fields</span>
+                    <span className="text-xl font-bold text-[#A37039]">{fields}</span>
                 </div>
             </div>
 
             {/* Forests */}
-            <div className="mb-4 p-3 bg-green-100 rounded-lg border-2 border-green-400">
-                <div className="text-sm font-semibold text-green-900 mb-2">🌲 Forests</div>
-                <div className="flex justify-between text-xs text-green-800">
+            <div className="mb-4 p-4 bg-white rounded-lg border-2 border-[#35613F] shadow-sm">
+                <div className="text-base font-bold text-[#35613F] mb-3">Forests</div>
+                <div className="flex justify-between text-sm text-[#35613F]">
                     <span>Total: <span className="font-bold">{forestsStats.total}</span></span>
                     <span>Owned: <span className="font-bold">{forestsStats.owned}</span></span>
                 </div>
             </div>
 
             {/* Crops */}
-            <div className="p-3 bg-yellow-50 rounded-lg border-2 border-yellow-400">
-                <div className="text-sm font-semibold text-yellow-900 mb-2">🌱 Crops</div>
-                <div className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                        <span className="text-yellow-800">Total:</span>
-                        <span className="font-bold text-yellow-900">{cropsStats.total}</span>
+            <div className="p-4 bg-white rounded-lg border-2 border-[#F5A842] shadow-sm">
+                <div className="text-base font-bold text-[#F5A842] mb-3">Crops</div>
+                <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-[#35613F]">Total:</span>
+                        <span className="font-bold text-[#35613F]">{cropsStats.total}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                        <span className="text-yellow-800">🌱 Seedling:</span>
-                        <span className="font-bold text-yellow-900">{cropsStats.seed}</span>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-[#35613F]">Seedling:</span>
+                        <span className="font-bold text-[#35613F]">{cropsStats.seed}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                        <span className="text-yellow-800">🌿 Growing:</span>
-                        <span className="font-bold text-yellow-900">{cropsStats.growing}</span>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-[#35613F]">Growing:</span>
+                        <span className="font-bold text-[#35613F]">{cropsStats.growing}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                        <span className="text-yellow-800">🌾 Ready:</span>
-                        <span className="font-bold text-yellow-900">{cropsStats.harvest}</span>
+                    <div className="flex justify-between text-sm">
+                        <span className="text-[#35613F]">Ready:</span>
+                        <span className="font-bold text-[#35613F]">{cropsStats.harvest}</span>
                     </div>
                 </div>
             </div>
 
             {/* Game Progress Indicator */}
             {currentStep >= maxSteps && (
-                <div className="mt-4 p-2 bg-red-100 border-2 border-red-500 rounded text-center">
-                    <span className="text-sm font-bold text-red-700">🏁 Game Complete!</span>
+                <div className="mt-4 p-3 bg-[#F5A842] border-2 border-[#A37039] rounded-lg text-center shadow-sm">
+                    <span className="text-sm font-bold text-[#35613F]">Game Complete!</span>
                 </div>
             )}
         </div>

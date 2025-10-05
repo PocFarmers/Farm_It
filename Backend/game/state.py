@@ -17,25 +17,39 @@ def initialize_game(db: Session) -> None:
     Initialize new game with default state.
     Creates GameState, Player, and Tiles from map generation.
     """
+    print("🎮 [initialize_game] Starting game initialization")
+
     # Clean up old game if exists
     existing_state = db.query(GameState).first()
     if existing_state:
+        print("🎮 [initialize_game] Cleaning up existing game")
         db.query(Tile).delete()
         db.query(Player).delete()
         db.query(GameState).delete()
         db.commit()
 
-    # Create new game state
-    game_state = GameState(current_step=0, max_steps=10, is_game_over=False)
-    player = Player(shovels=3, drops=3, score=0)
-
-    # Generate initial map
+    # Generate initial map ONCE
+    print("🎮 [initialize_game] Calling get_map() to generate new map")
     matrix = get_map()  # Returns (ny, nx, 3) array
     ny, nx = matrix.shape[0], matrix.shape[1]
+    print(f"🎮 [initialize_game] Received map with dimensions {ny}x{nx}")
+
+    # Create new game state with map dimensions
+    game_state = GameState(
+        current_step=0,
+        max_steps=10,
+        is_game_over=False,
+        map_rows=ny,
+        map_cols=nx
+    )
+    player = Player(shovels=3, drops=3, score=0)
 
     # Create tiles from matrix
     tiles = []
     tile_id = 1
+    island_cells = 0
+    water_cells = 0
+
     for i in range(ny):
         for j in range(nx):
             if matrix[i, j, 0] == 1:  # Island mask - only create tiles for island
@@ -54,12 +68,58 @@ def initialize_game(db: Session) -> None:
                 )
                 tiles.append(tile)
                 tile_id += 1
+                island_cells += 1
+            else:
+                water_cells += 1
 
     # Add all objects and commit once
     db.add(game_state)
     db.add(player)
     db.add_all(tiles)
     db.commit()
+
+    print(f"🎮 [initialize_game] Game initialized successfully")
+    print(f"🎮 [initialize_game] Map dimensions: {ny}x{nx} = {ny*nx} total cells")
+    print(f"🎮 [initialize_game] Island tiles created: {island_cells}")
+    print(f"🎮 [initialize_game] Water cells: {water_cells}")
+    print(f"🎮 [initialize_game] Verification: {island_cells + water_cells} = {ny*nx} ✓")
+
+
+def get_map_from_tiles(db: Session) -> np.ndarray:
+    """
+    Reconstruct map matrix from stored tiles.
+    Returns (ny, nx, 3) array where:
+    - Layer 0: mask (0 = water, 1 = land)
+    - Layer 1: soil moisture (humidity)
+    - Layer 2: temperature
+    """
+    game_state = db.query(GameState).first()
+    if not game_state:
+        raise ValueError("Game not initialized")
+
+    ny, nx = game_state.map_rows, game_state.map_cols
+    matrix = np.zeros((ny, nx, 3))
+
+    # Get all tiles
+    tiles = db.query(Tile).all()
+
+    print(f"🗺️ [get_map_from_tiles] Reconstructing map from {len(tiles)} tiles")
+    print(f"🗺️ [get_map_from_tiles] Map dimensions: {ny}x{nx}")
+
+    # Fill matrix from tiles
+    for tile in tiles:
+        i, j = tile.grid_i, tile.grid_j
+        matrix[i, j, 0] = 1  # mask - tile exists (island)
+        matrix[i, j, 1] = tile.humidity
+        matrix[i, j, 2] = tile.temperature
+
+    # Count island vs water cells
+    island_cells = np.sum(matrix[:, :, 0] == 1)
+    water_cells = (ny * nx) - island_cells
+
+    print(f"🗺️ [get_map_from_tiles] Island cells: {island_cells}, Water cells: {water_cells}")
+
+    return matrix
 
 
 def get_current_game_state(db: Session) -> GameStateResponse:
@@ -74,6 +134,10 @@ def get_current_game_state(db: Session) -> GameStateResponse:
     if not game_state or not player:
         raise ValueError("Game not initialized. Call initialize_game() first.")
 
+    print(f"🔍 [get_current_game_state] GameState attributes: {dir(game_state)}")
+    print(f"🔍 [get_current_game_state] Has map_rows: {hasattr(game_state, 'map_rows')}")
+    print(f"🔍 [get_current_game_state] Has map_cols: {hasattr(game_state, 'map_cols')}")
+
     # Calculate tiles_owned
     tiles_owned = [t.id for t in tiles if t.owner == "player"]
 
@@ -87,12 +151,16 @@ def get_current_game_state(db: Session) -> GameStateResponse:
 
     tile_responses = [TileResponse.model_validate(t) for t in tiles]
 
+    print(f"🔍 [get_current_game_state] map_rows={game_state.map_rows}, map_cols={game_state.map_cols}")
+
     return GameStateResponse(
         step=game_state.current_step,
         max_steps=game_state.max_steps,
         is_game_over=game_state.is_game_over,
         player=player_response,
-        tiles=tile_responses
+        tiles=tile_responses,
+        map_shape=[game_state.map_rows, game_state.map_cols],
+        map_layers=["mask", "soil_moisture", "soil_temperature"]
     )
 
 
@@ -100,6 +168,7 @@ def load_next_step_data(step: int, db: Session) -> dict:
     """
     Load weather data for the next step.
     Updates tile temperatures and humidities based on new data.
+    Each step = 1 week, so we advance by 7 days in the historical data.
 
     Args:
         step: The step number to load data for
@@ -108,19 +177,20 @@ def load_next_step_data(step: int, db: Session) -> dict:
     Returns:
         dict with update statistics
     """
-    # For now, use get_history_info to fetch weather data
-    # In production, this would load from sequential GeoJSON files
     try:
         # Get historical data (using a default location for now)
         history_data = get_history_info(0.943227, 20.000000)
 
-        if step < len(history_data.get("soil_moisture_0_to_7cm_mean", [])):
-            humidity = history_data["soil_moisture_0_to_7cm_mean"][step]
-            temperature = history_data["soil_temperature_28_to_100cm_mean"][step]
+        # Each step = 1 week = 7 days
+        day_index = step * 7
+
+        if day_index < len(history_data.get("soil_moisture_0_to_7cm_mean", [])):
+            humidity = history_data["soil_moisture_0_to_7cm_mean"][day_index]
+            temperature = history_data["soil_temperature_28_to_100cm_mean"][day_index]
         else:
             # Use last available data if step exceeds available data
-            humidity = history_data["soil_moisture_0_to_7cm_mean"][-1]
-            temperature = history_data["soil_temperature_28_to_100cm_mean"][-1]
+            humidity = history_data["soil_moisture_0_to_7cm_mean"].iloc[-1]
+            temperature = history_data["soil_temperature_28_to_100cm_mean"].iloc[-1]
 
         # Update all tiles with new weather data
         tiles = db.query(Tile).all()
@@ -133,14 +203,18 @@ def load_next_step_data(step: int, db: Session) -> dict:
 
         db.commit()
 
+        print(f"🌦️ [load_next_step_data] Step {step} -> Day {day_index}: temp={temperature:.1f}°C, humidity={humidity:.3f}")
+
         return {
             "step": step,
+            "day_index": day_index,
             "tiles_updated": updated_count,
             "humidity": float(humidity),
             "temperature": float(temperature)
         }
 
     except Exception as e:
+        print(f"❌ [load_next_step_data] Error loading weather data: {e}")
         return {
             "step": step,
             "tiles_updated": 0,
@@ -174,22 +248,29 @@ def advance_to_next_step(db: Session) -> dict:
         advance_crop_state
     )
 
+    print("\n🎯 [advance_to_next_step] ========== START TURN ADVANCE ==========")
+
     game_state = db.query(GameState).first()
     player = db.query(Player).first()
 
     if not game_state or not player:
+        print("❌ [advance_to_next_step] Game not initialized")
         return {
             "success": False,
             "message": "Game not initialized"
         }
 
+    print(f"📊 [advance_to_next_step] Current step: {game_state.current_step}")
+
     # Increment step
     game_state.current_step += 1
+    print(f"📊 [advance_to_next_step] New step: {game_state.current_step}")
 
     # Check game over
     if game_state.current_step >= game_state.max_steps:
         game_state.is_game_over = True
         db.commit()
+        print(f"🏁 [advance_to_next_step] Game Over! Final score: {player.score}")
         return {
             "success": True,
             "message": "Game Over!",
@@ -199,7 +280,9 @@ def advance_to_next_step(db: Session) -> dict:
         }
 
     # Load new weather data
+    print(f"🌦️ [advance_to_next_step] Loading weather for step {game_state.current_step}")
     weather_update = load_next_step_data(game_state.current_step, db)
+    print(f"🌦️ [advance_to_next_step] Weather loaded: temp={weather_update.get('temperature')}°C, humidity={weather_update.get('humidity')}")
 
     # Reset irrigation flags (start of turn)
     reset_irrigation_flags(db)
@@ -232,7 +315,7 @@ def advance_to_next_step(db: Session) -> dict:
     # Commit all changes together
     db.commit()
 
-    return {
+    result = {
         "success": True,
         "step": game_state.current_step,
         "auto_irrigated_tiles": auto_irrigated,
@@ -250,3 +333,8 @@ def advance_to_next_step(db: Session) -> dict:
         },
         "is_game_over": game_state.is_game_over
     }
+
+    print(f"✅ [advance_to_next_step] Turn complete. Result: {result}")
+    print("🎯 [advance_to_next_step] ========== END TURN ADVANCE ==========\n")
+
+    return result
