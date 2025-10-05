@@ -1,6 +1,46 @@
 # Farm It — Manual Run Guide (Frontend + Backend)
 
-This guide shows how to **manually** install and run the **FastAPI backend** and the **React (Vite) frontend**.
+## About Farm It
+
+**Farm It** is an educational simulation game that invites players to explore **sustainable farming** in a changing climate. Across **tropical**, **temperate**, **arid**, and **cold** islands, you’ll manage crops and resources while balancing productivity with environmental responsibility.
+
+---
+
+## Real Climate Data, Real Decisions
+
+To ensure realism, Farm It integrates **NASA** satellite–derived datasets via the **POWER API** (Prediction Of Worldwide Energy Resources). Three key variables drive the in-game climate model:
+
+- **T2M** — *Air temperature at 2 m*  
+  Influences crop growth rates and **evapotranspiration** (water loss from soil and plants).
+
+- **RH2M** — *Relative humidity at 2 m*  
+  Affects **irrigation needs** and plant **water stress**.
+
+- **PRECTOTCORR** — *Total corrected precipitation*  
+  Determines **rainfall input** and **soil moisture** dynamics.
+
+These datasets combine products such as **MERRA-2** and **IMERG**, with spatial resolutions typically ~**10–60 km**, providing authentic environmental variability.
+
+---
+
+## What This Means for Gameplay
+
+Grounding decisions in real climate inputs enables players to:
+
+- Plan **irrigation** based on humidity, temperature, and rainfall patterns.  
+- Time **fertilization** and crop cycles to match local climate signals.  
+- Optimize **land management** for long-term **resilience** and **resource efficiency**.  
+- Preserve **biodiversity** while maintaining yields.
+
+FarmIt demonstrates how **space data** can power **sustainable agriculture** and **climate action**—turning environmental signals into actionable, in-game strategy.
+
+---
+
+*Data source:* NASA POWER API (with inputs from MERRA-2 and IMERG).
+
+# Installation
+
+**This guide shows how to **manually** install and run the **FastAPI backend** and the **React (Vite) frontend**.**
 
 ---
 
