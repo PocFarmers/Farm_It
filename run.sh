@@ -14,7 +14,7 @@ PORT="${PORT:-8000}"
 
 # Active venv
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
-  echo "❌ Venv introuvable (${VENV_DIR}). Lancez d'abord ./install_all.sh"
+  echo "❌ Venv not found (${VENV_DIR}). Launch ./install_all.sh first"
   exit 1
 fi
 
@@ -22,8 +22,8 @@ fi
 source "${VENV_DIR}/bin/activate"
 
 # Vérifs
-command -v uvicorn >/dev/null 2>&1 || { echo "❌ uvicorn non trouvé. (pip install uvicorn)"; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo "❌ npm non trouvé."; exit 1; }
+command -v uvicorn >/dev/null 2>&1 || { echo "❌ uvicorn not found. (pip install uvicorn)"; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo "❌ npm not found."; exit 1; }
 
 # Démarre le backend
 echo "🚀 Backend: http://${HOST}:${PORT}"
@@ -32,7 +32,7 @@ BACK_PID=$!
 
 cleanup() {
   echo ""
-  echo "🛑 Arrêt en cours..."
+  echo "🛑 Stop in progress..."
   kill "${BACK_PID}" 2>/dev/null || true
 }
 trap cleanup INT TERM
