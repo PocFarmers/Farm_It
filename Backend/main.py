@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-print("keyyyyyyyyy " + OPENAI_API_KEY )
+
 app = FastAPI(
     title="Farm It API",
     version="1.0.0",
