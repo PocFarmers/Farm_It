@@ -123,5 +123,3 @@ def get_map():
     combined_matrix[:, :, 2] = mask * hum
     print(combined_matrix.shape)
     return combined_matrix
-
-get_map()
