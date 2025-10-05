@@ -47,7 +47,7 @@ The backend API will be available at `http://localhost:8000`
 
 1. Navigate to the Frontend directory:
 ```bash
-cd Frontend
+cd frontend
 ```
 
 2. Install dependencies:
