@@ -1,0 +1,5 @@
+Event,Indicator,Threshold
+Drought,Temperature_Minimum,35
+Drought,Soil_Moisture_Maximum,0.25
+Fire,Soil_Moisture_Maximum,0.2
+Fire,Temperature_Minimum,40

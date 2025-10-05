@@ -1,0 +1,13 @@
+Crop,Stage,Temperature_Min,Temperature_Max,Soil_Moisture_Min,Soil_Moisture_Max
+Banana,Germination,20,35,0.35,0.8
+Banana,Growth,24,38,0.4,0.85
+Banana,Fruiting,24,35,0.4,0.8
+Banana,Senescence,20,32,0.35,0.75
+Potato,Germination,7,25,0.25,0.6
+Potato,Growth,15,25,0.3,0.6
+Potato,Tuber_Bulking,15,22,0.3,0.7
+Potato,Senescence,10,25,0.25,0.6
+Sorghum,Germination,20,35,0.2,0.5
+Sorghum,Growth,25,38,0.15,0.45
+Sorghum,Grain_Filling,25,36,0.2,0.45
+Sorghum,Senescence,20,32,0.15,0.4

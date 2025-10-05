@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+
+.leaflet-popup-content-wrapper {
+    background: rgba(33, 150, 243, 0.95);
+    color: white;
+    border-radius: 8px;
+}
+
+.leaflet-popup-tip {
+    background: rgba(33, 150, 243, 0.95);
+}

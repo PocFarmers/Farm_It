@@ -1,0 +1,2 @@
+Value,MODLAND,Data Quality flag,Emis Error flag,LST Error Flag
+65,"LST produced, other quality, recommend examination of more detailed QA",Good data quality,Average emissivity error <= 0.01,Average LST error <= 2K

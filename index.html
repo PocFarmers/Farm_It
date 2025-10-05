@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frise de Temps - Jeu de Ferme</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d5016 0%, #1a3a0f 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #game-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #map {
+            flex: 3;
+            height: 100%;
+            position: relative;
+        }
+        
+        #sidebar {
+            flex: 1;
+            background: rgba(45, 80, 22, 0.95);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        
+        .dashboard {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(139, 195, 74, 0.5);
+        }
+        
+        .dashboard h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #c5e1a5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        
+        .stat-label {
+            font-weight: bold;
+            color: #c5e1a5;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            color: #fff;
+        }
+        
+        .farm-panel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(139, 195, 74, 0.5);
+        }
+        
+        .farm-panel h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #c5e1a5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .crop-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        
+        .crop-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            font-size: 30px;
+        }
+        
+        .crop-info {
+            flex: 1;
+        }
+        
+        .crop-name {
+            font-weight: bold;
+            color: #c5e1a5;
+            margin-bottom: 3px;
+        }
+        
+        .crop-quantity {
+            font-size: 18px;
+            color: #fff;
+        }
+        
+        #end-wave-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #8bc34a 0%, #689f38 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        #end-wave-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .tile-popup {
+            background: rgba(33, 150, 243, 0.95);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 250px;
+        }
+        
+        .tile-popup h3 {
+            margin-bottom: 12px;
+            font-size: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .tile-info {
+            margin-bottom: 15px;
+        }
+        
+        .tile-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding: 4px 0;
+        }
+        
+        .tile-actions h4 {
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+        
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .leaflet-popup-content-wrapper {
+            background: transparent;
+            box-shadow: none;
+        }
+        
+        .leaflet-popup-content {
+            margin: 0;
+        }
+        
+        .leaflet-popup-tip {
+            background: rgba(33, 150, 243, 0.95);
+        }
+        
+        .event-marker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        .warning-marker {
+            width: 30px;
+            height: 30px;
+            background: #ffc107;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 20px;
+            animation: warning-blink 1s infinite;
+        }
+        
+        @keyframes warning-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #2d5016 0%, #1a3a0f 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            border: 3px solid #8bc34a;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content h2 {
+            color: #c5e1a5;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .modal-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .modal-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #8bc34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .plots-owned {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .plots-owned-label {
+            color: #c5e1a5;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .plots-owned-value {
+            font-size: 24px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="map"></div>
+        <div id="sidebar">
+            <div class="dashboard">
+                <h2>Tableau de Bord</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Score</span>
+                    <span class="stat-value" id="score">100</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Monnaie</span>
+                    <span class="stat-value" id="currency">500€</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Eau (L)</span>
+                    <span class="stat-value" id="water">1000</span>
+                </div>
+            </div>
+            
+            <div class="farm-panel">
+                <h2>Ma Ferme</h2>
+                <div class="plots-owned">
+                    <div class="plots-owned-label">Parcelles Possédées</div>
+                    <div class="plots-owned-value" id="plots-count">4</div>
+                </div>
+                <div id="crops-container">
+                    <div class="crop-item">
+                        <div class="crop-icon">🌾</div>
+                        <div class="crop-info">
+                            <div class="crop-name">Blé</div>
+                            <div class="crop-quantity">10</div>
+                        </div>
+                    </div>
+                    <div class="crop-item">
+                        <div class="crop-icon">🥔</div>
+                        <div class="crop-info">
+                            <div class="crop-name">Pommes de terre</div>
+                            <div class="crop-quantity">8</div>
+                        </div>
+                    </div>
+                    <div class="crop-item">
+                        <div class="crop-icon">🌽</div>
+                        <div class="crop-info">
+                            <div class="crop-name">Maïs</div>
+                            <div class="crop-quantity">4</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button id="end-wave-btn">Fin de Vague</button>
+    
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <h2>Résultats de la Vague</h2>
+            <div id="event-results"></div>
+            <button class="modal-btn" onclick="closeModal()">Continuer</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            score: 100,
+            currency: 500,
+            water: 1000,
+            tiles: [],
+            ownedTiles: [],
+            events: [],
+            warnings: [],
+            selectedTile: null
+        };
+        
+        // Initialize map
+        const map = L.map('map').setView([46.603354, 1.888334], 7);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Tile size (50m)
+        const tileSize = 0.00045; // Approximately 50m in degrees
+        
+        // Zone types with colors
+        const zones = {
+            tropical: { name: 'Tropicale', color: '#ff6b6b' },
+            cold: { name: 'Froide', color: '#4dabf7' },
+            arid: { name: 'Aride', color: '#ffd43b' },
+            temperate: { name: 'Tempérée', color: '#51cf66' }
+        };
+        
+        // Generate tiles around spawn point
+        function generateTiles(centerLat, centerLng, count) {
+            const tiles = [];
+            for (let i = 0; i < count; i++) {
+                const offsetLat = (Math.random() - 0.5) * tileSize * 10;
+                const offsetLng = (Math.random() - 0.5) * tileSize * 10;
+                
+                const lat = centerLat + offsetLat;
+                const lng = centerLng + offsetLng;
+                
+                const zoneKeys = Object.keys(zones);
+                const zone = zoneKeys[Math.floor(Math.random() * zoneKeys.length)];
+                
+                tiles.push({
+                    lat,
+                    lng,
+                    temperature: Math.round(Math.random() * 40 - 5),
+                    humidity: Math.round(Math.random() * 100),
+                    ndvi: (Math.random() * 0.8 + 0.2).toFixed(2),
+                    zone,
+                    owned: i < 4,
+                    marker: null
+                });
+            }
+            return tiles;
+        }
+        
+        // Random spawn in France
+        const spawnLat = 46.603354 + (Math.random() - 0.5) * 5;
+        const spawnLng = 1.888334 + (Math.random() - 0.5) * 5;
+        
+        gameState.tiles = generateTiles(spawnLat, spawnLng, 50);
+        gameState.ownedTiles = gameState.tiles.filter(t => t.owned);
+        
+        // Center map on spawn
+        map.setView([spawnLat, spawnLng], 13);
+        
+        // Draw tiles
+        function drawTile(tile) {
+            const bounds = [
+                [tile.lat, tile.lng],
+                [tile.lat + tileSize, tile.lng + tileSize]
+            ];
+            
+            const color = tile.owned ? '#2196F3' : zones[tile.zone].color;
+            const fillOpacity = tile.owned ? 0.6 : 0.3;
+            
+            const rectangle = L.rectangle(bounds, {
+                color: tile.owned ? '#2196F3' : '#333',
+                weight: tile.owned ? 3 : 1,
+                fillColor: color,
+                fillOpacity: fillOpacity
+            }).addTo(map);
+            
+            tile.marker = rectangle;
+            
+            rectangle.on('click', () => selectTile(tile));
+            
+            return rectangle;
+        }
+        
+        gameState.tiles.forEach(tile => drawTile(tile));
+        
+        // Select tile
+        function selectTile(tile) {
+            if (gameState.selectedTile && gameState.selectedTile.marker) {
+                const prevTile = gameState.selectedTile;
+                prevTile.marker.setStyle({
+                    color: prevTile.owned ? '#2196F3' : '#333',
+                    weight: prevTile.owned ? 3 : 1
+                });
+            }
+            
+            gameState.selectedTile = tile;
+            tile.marker.setStyle({
+                color: '#2196F3',
+                weight: 4
+            });
+            
+            showTilePopup(tile);
+        }
+        
+        // Show tile popup
+        function showTilePopup(tile) {
+            const popupContent = `
+                <div class="tile-popup">
+                    <h3>Information Parcelle</h3>
+                    <div class="tile-info">
+                        <div class="tile-info-row">
+                            <span>Température:</span>
+                            <strong>${tile.temperature}°C</strong>
+                        </div>
+                        <div class="tile-info-row">
+                            <span>Humidité:</span>
+                            <strong>${tile.humidity}%</strong>
+                        </div>
+                        <div class="tile-info-row">
+                            <span>NDVI:</span>
+                            <strong>${tile.ndvi}</strong>
+                        </div>
+                        <div class="tile-info-row">
+                            <span>Zone:</span>
+                            <strong>${zones[tile.zone].name}</strong>
+                        </div>
+                    </div>
+                    <div class="tile-actions">
+                        <h4>Actions</h4>
+                        <button class="action-btn" onclick="buyTile(${gameState.tiles.indexOf(tile)})">
+                            Acheter Parcelle (100€)
+                        </button>
+                        <button class="action-btn" onclick="useAction(${gameState.tiles.indexOf(tile)}, 'firebreak')">
+                            Coupe-feu (50€)
+                        </button>
+                        <button class="action-btn" onclick="useAction(${gameState.tiles.indexOf(tile)}, 'irrigate')">
+                            Irriguer (30€, 50L)
+                        </button>
+                        <button class="action-btn" onclick="useAction(${gameState.tiles.indexOf(tile)}, 'fertilize')">
+                            Fertiliser (40€)
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const popup = L.popup()
+                .setLatLng([tile.lat + tileSize / 2, tile.lng + tileSize / 2])
+                .setContent(popupContent)
+                .openOn(map);
+        }
+        
+        // Buy tile
+        function buyTile(index) {
+            const tile = gameState.tiles[index];
+            if (!tile.owned && gameState.currency >= 100) {
+                tile.owned = true;
+                gameState.currency -= 100;
+                gameState.ownedTiles.push(tile);
+                updateUI();
+                
+                tile.marker.setStyle({
+                    color: '#2196F3',
+                    weight: 3,
+                    fillColor: '#2196F3',
+                    fillOpacity: 0.6
+                });
+                
+                map.closePopup();
+            }
+        }
+        
+        // Use action
+        function useAction(index, action) {
+            const tile = gameState.tiles[index];
+            const costs = {
+                firebreak: { currency: 50 },
+                irrigate: { currency: 30, water: 50 },
+                fertilize: { currency: 40 }
+            };
+            
+            const cost = costs[action];
+            if (gameState.currency >= cost.currency && (!cost.water || gameState.water >= cost.water)) {
+                gameState.currency -= cost.currency;
+                if (cost.water) gameState.water -= cost.water;
+                
+                gameState.score += 10;
+                updateUI();
+                
+                map.closePopup();
+            }
+        }
+        
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('currency').textContent = gameState.currency + '€';
+            document.getElementById('water').textContent = gameState.water;
+            document.getElementById('plots-count').textContent = gameState.ownedTiles.length;
+        }
+        
+        // Generate events
+        function generateEvents() {
+            gameState.events = [];
+            const eventTypes = [
+                { type: 'fire', color: '#ff4444', icon: '🔥' },
+                { type: 'drought', color: '#ff9800', icon: '☀️' },
+                { type: 'rain', color: '#2196F3', icon: '🌧️' }
+            ];
+            
+            const numEvents = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < numEvents; i++) {
+                const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+                const randomTile = gameState.tiles[Math.floor(Math.random() * gameState.tiles.length)];
+                
+                const eventMarker = L.divIcon({
+                    html: `<div class="event-marker" style="background: ${eventType.color}">${eventType.icon}</div>`,
+                    iconSize: [40, 40],
+                    className: ''
+                });
+                
+                const marker = L.marker([randomTile.lat + tileSize/2, randomTile.lng + tileSize/2], {
+                    icon: eventMarker
+                }).addTo(map);
+                
+                gameState.events.push({
+                    type: eventType.type,
+                    tile: randomTile,
+                    marker: marker
+                });
+            }
+        }
+        
+        // Generate warnings
+        function generateWarnings() {
+            gameState.warnings.forEach(w => w.marker.remove());
+            gameState.warnings = [];
+            
+            gameState.ownedTiles.forEach(tile => {
+                const riskScore = Math.random();
+                if (riskScore > 0.6) {
+                    const warningMarker = L.divIcon({
+                        html: '<div class="warning-marker">!</div>',
+                        iconSize: [30, 30],
+                        className: ''
+                    });
+                    
+                    const marker = L.marker([tile.lat + tileSize * 0.8, tile.lng + tileSize * 0.8], {
+                        icon: warningMarker
+                    }).addTo(map);
+                    
+                    gameState.warnings.push({
+                        tile: tile,
+                        marker: marker
+                    });
+                }
+            });
+        }
+        
+        // End wave
+        document.getElementById('end-wave-btn').addEventListener('click', () => {
+            let results = '<h3>Événements survenus:</h3>';
+            let penalties = 0;
+            
+            gameState.events.forEach(event => {
+                const affectedOwned = gameState.ownedTiles.filter(t => 
+                    Math.abs(t.lat - event.tile.lat) < tileSize * 2 && 
+                    Math.abs(t.lng - event.tile.lng) < tileSize * 2
+                );
+                
+                if (affectedOwned.length > 0) {
+                    const penalty = affectedOwned.length * 20;
+                    penalties += penalty;
+                    results += `<p>🔴 ${event.type === 'fire' ? 'Incendie' : event.type === 'drought' ? 'Sécheresse' : 'Pluies torrentielles'} - ${affectedOwned.length} parcelles affectées (-${penalty} points)</p>`;
+                }
+            });
+            
+            if (penalties === 0) {
+                results += '<p>✅ Aucun dégât! Bonus: +50 points</p>';
+                gameState.score += 50;
+            } else {
+                gameState.score -= penalties;
+            }
+            
+            gameState.events.forEach(e => e.marker.remove());
+            gameState.warnings.forEach(w => w.marker.remove());
+            
+            updateUI();
+            
+            document.getElementById('event-results').innerHTML = results;
+            document.getElementById('event-modal').style.display = 'flex';
+            
+            if (gameState.currency < 0 || gameState.score < 0) {
+                document.getElementById('event-results').innerHTML += '<p style="color: #ff4444; font-weight: bold; margin-top: 20px;">GAME OVER - Ressources épuisées!</p>';
+            }
+            
+            setTimeout(() => {
+                generateEvents();
+                generateWarnings();
+            }, 2000);
+        });
+        
+        function closeModal() {
+            document.getElementById('event-modal').style.display = 'none';
+        }
+        
+        // Start game
+        generateEvents();
+        generateWarnings();
+        
+        // Random events every 30 seconds
+        setInterval(() => {
+            generateEvents();
+            generateWarnings();
+        }, 30000);
+    </script>
+</body>
+</html>
